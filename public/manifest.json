@@ -1,0 +1,1 @@
+{"name": "Encryption Center", "short_name": "Enc Center", "description": "Client-side crypto suite: encrypt text, code, and files with AES-256-GCM, ChaCha20, age, OpenPGP, plus steganography and key management.", "start_url": "/", "scope": "/", "display": "standalone", "background_color": "#0a0a0a", "theme_color": "#0a0a0a", "orientation": "any"}
