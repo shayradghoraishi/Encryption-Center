@@ -105,12 +105,14 @@
     "eslint-plugin-react-refresh": "^0.4.18",
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^15.14.0",
-    "nitro": "^3.0.260610-beta",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
     "vite": "^8.2.0",
     "wrangler": "^4.20.0"
+  },
+  "overrides": {
+    "unenv": "2.0.0-rc.24"
   },
   "engines": {
     "node": ">=22",
