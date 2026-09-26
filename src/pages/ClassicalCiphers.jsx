@@ -52,7 +52,7 @@ export default function ClassicalCiphers() {
       </PageHeader>
 
       <SecurityNote variant="danger">
-        These ciphers are <strong>broken</strong> and exist for education only. Never use them to protect real data. Modern brute force cracks them in milliseconds.
+        {t("classical.warning")}
       </SecurityNote>
 
       <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -89,13 +89,13 @@ export default function ClassicalCiphers() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <div className="space-y-4">
-          <IOField label="Input" value={input} onChange={setInput} placeholder="Enter text…" rows={7} />
+          <IOField label={t("common.input")} value={input} onChange={setInput} placeholder={t("common.enterText")} rows={7} />
           <Button onClick={run} disabled={loading} className="w-full gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRightLeft className="h-4 w-4" />}
             {mode === "encrypt" ? "Encrypt" : "Decrypt"}
           </Button>
         </div>
-        <IOField label="Output" value={output} readOnly placeholder="Result…" rows={12} downloadName="cipher.txt" />
+        <IOField label={t("common.output")} value={output} readOnly placeholder={t("common.loading")} rows={12} downloadName="cipher.txt" />
       </div>
     </div>
   );

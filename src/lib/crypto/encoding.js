@@ -104,8 +104,9 @@ export const encodingMethods = {
     },
     decode: (str) => {
       const clean = str.replace(/\s+/g, "");
+      if (clean.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(clean)) throw new Error("Invalid hexadecimal input");
       const bytes = new Uint8Array(clean.length / 2);
-      for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(clean.substr(i * 2, 2), 16);
+      for (let i = 0; i < bytes.length; i++) bytes[i] = Number.parseInt(clean.slice(i * 2, i * 2 + 2), 16);
       return new TextDecoder().decode(bytes);
     },
   },
@@ -126,10 +127,11 @@ export const encodingMethods = {
       new TextEncoder().encode(str)
         .reduce((acc, b) => acc + b.toString(2).padStart(8, "0") + " ", ""),
     decode: (str) => {
-      const parts = str.trim().split(/\s+/);
-      const bytes = new Uint8Array(parts.length);
-      parts.forEach((p, i) => (bytes[i] = parseInt(p, 2)));
-      return new TextDecoder().decode(bytes);
+      const clean = str.trim();
+      if (!clean) return "";
+      const parts = clean.split(/\s+/);
+      if (parts.some((p) => !/^[01]{8}$/.test(p))) throw new Error("Binary input must contain 8-bit groups");
+      return new TextDecoder().decode(Uint8Array.from(parts, (p) => Number.parseInt(p, 2)));
     },
   },
   morse: {

@@ -7,7 +7,7 @@ const BARS = [
   "bg-orange-500",
   "bg-amber-500",
   "bg-lime-500",
-  "bg-emerald-500",
+  "bg-green-500",
 ];
 
 export default function PasswordStrength({ password, className }) {
@@ -27,7 +27,7 @@ export default function PasswordStrength({ password, className }) {
       </div>
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>
-          Strength: <span className={cn("font-medium", score >= 3 ? "text-emerald-400" : score >= 2 ? "text-amber-400" : "text-rose-400")}>{label}</span>
+          Strength: <span className={cn("font-medium", score >= 3 ? "text-green-400" : score >= 2 ? "text-amber-400" : "text-rose-400")}>{label}</span>
         </span>
         {password && <span>{entropy} bits entropy</span>}
       </div>

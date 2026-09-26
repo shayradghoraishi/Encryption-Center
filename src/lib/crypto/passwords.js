@@ -16,9 +16,16 @@ export function generatePassword(length = 20, options = {}) {
   if (symbols) pool += SETS.symbols;
   if (noAmbiguous) pool = pool.replace(/[O0Il1|]/g, "");
   if (!pool) return "";
-  const random = crypto.getRandomValues(new Uint32Array(length));
   let out = "";
-  for (let i = 0; i < length; i++) out += pool[random[i] % pool.length];
+  const limit = Math.floor(0x100000000 / pool.length) * pool.length;
+  while (out.length < length) {
+    const random = crypto.getRandomValues(new Uint32Array(Math.max(16, length - out.length)));
+    for (const value of random) {
+      if (value >= limit) continue;
+      out += pool[value % pool.length];
+      if (out.length === length) break;
+    }
+  }
   return out;
 }
 

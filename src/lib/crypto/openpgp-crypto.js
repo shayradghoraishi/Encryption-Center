@@ -3,14 +3,12 @@
 
 import * as openpgp from "openpgp";
 
-const enc = new TextEncoder();
-
 export async function openpgpEncrypt(plaintext, password) {
   const message = await openpgp.createMessage({ text: plaintext });
   const encrypted = await openpgp.encrypt({
     message,
     passwords: [password],
-    config: { preferredSymmetricAlgorithm: "aes256" },
+    config: { preferredSymmetricAlgorithm: openpgp.enums.symmetric.aes256 },
   });
   return encrypted; // armored string
 }
@@ -20,7 +18,7 @@ export async function openpgpDecrypt(armored, password) {
   const { data } = await openpgp.decrypt({
     message,
     passwords: [password],
-    format: "string",
+    format: "utf8",
   });
   return data;
 }
@@ -36,7 +34,7 @@ export async function openpgpDecryptWithKey(armored, privateKeyArmored, passphra
   const privKey = await openpgp.readPrivateKey({ armoredKey: privateKeyArmored });
   const key = passphrase ? await openpgp.decryptKey({ privateKey: privKey, passphrase }) : privKey;
   const message = await openpgp.readMessage({ armoredMessage: armored });
-  const { data } = await openpgp.decrypt({ message, decryptionKeys: [key], format: "string" });
+  const { data } = await openpgp.decrypt({ message, decryptionKeys: [key], format: "utf8" });
   return data;
 }
 

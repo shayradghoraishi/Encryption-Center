@@ -4,10 +4,6 @@ function mod(n, m) {
   return ((n % m) + m) % m;
 }
 
-function sanitizeAlpha(str, keepCase = true) {
-  return str;
-}
-
 export const classicalCiphers = {
   caesar: {
     name: "Caesar",
@@ -172,12 +168,13 @@ function modInverse(a, m) {
 function playfair(text, key, decrypt) {
   const matrix = buildPlayfairMatrix((key || "KEY").toUpperCase());
   const clean = text.toUpperCase().replace(/[^A-Z]/g, "").replace(/J/g, "I");
-  let pairs = [];
-  for (let i = 0; i < clean.length; i += 2) {
-    let a = clean[i], b = clean[i + 1];
-    if (!b) b = "X";
-    if (a === b) b = "X";
-    pairs.push([a, b]);
+  const pairs = [];
+  for (let i = 0; i < clean.length;) {
+    const a = clean[i];
+    const b = clean[i + 1];
+    if (!b) { pairs.push([a, "X"]); break; }
+    if (a === b) { pairs.push([a, "X"]); i += 1; }
+    else { pairs.push([a, b]); i += 2; }
   }
   return pairs.map(([a, b]) => playfairPair(matrix, a, b, decrypt)).join("");
 }
@@ -281,7 +278,7 @@ function getColumnOrder(key) {
 
 function substitution(text, key, decrypt) {
   const k = (key || "").toUpperCase().replace(/[^A-Z]/g, "");
-  if (k.length !== 26) throw new Error("Substitution key must be 26 unique letters");
+  if (k.length !== 26 || new Set(k).size !== 26) throw new Error("Substitution key must contain 26 unique letters");
   const plain = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const cipher = k;
   return text.replace(/[a-zA-Z]/g, (c) => {
@@ -303,9 +300,14 @@ function baconianEncrypt(text) {
 }
 
 function baconianDecrypt(text) {
-  return text.replace(/[^AB]/g, "").match(/.{1,5}/g)?.map((group) =>
-    String.fromCharCode(parseInt(group.replace(/A/g, "0").replace(/B/g, "1"), 2) + 65)
-  ).join("") || "";
+  const clean = text.toUpperCase().replace(/[^AB]/g, "");
+  if (!clean) return "";
+  if (clean.length % 5 !== 0) throw new Error("Baconian input must contain complete 5-symbol groups");
+  return (clean.match(/.{5}/g) || []).map((group) => {
+    const value = Number.parseInt(group.replace(/A/g, "0").replace(/B/g, "1"), 2);
+    if (value > 25) throw new Error("Invalid Baconian group");
+    return String.fromCharCode(value + 65);
+  }).join("");
 }
 
 function polybiusEncrypt(text) {

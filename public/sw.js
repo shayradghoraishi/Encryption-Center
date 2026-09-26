@@ -1,24 +1,26 @@
-// Encryption Center service worker — offline caching of the app shell.
-const CACHE = "enc-center-v1";
+const CACHE = "enc-center-v2";
 
-self.addEventListener("install", () => { self.skipWaiting(); });
-self.addEventListener("activate", (e) => { e.waitUntil(self.clients.claim()); });
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
-self.addEventListener("fetch", (e) => {
-  const req = e.request;
-  if (req.method !== "GET") return;
-  e.respondWith(
-    caches.match(req).then((cached) => {
-      const fetchPromise = fetch(req)
-        .then((resp) => {
-          if (resp && resp.status === 200 && resp.type === "basic") {
-            const copy = resp.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-          }
-          return resp;
-        })
-        .catch(() => caches.match("/"));
-      return cached || fetchPromise;
-    })
-  );
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const cached = await cache.match(req);
+    try {
+      const response = await fetch(req);
+      if (response.ok && response.type === "basic") cache.put(req, response.clone());
+      return response;
+    } catch {
+      if (cached) return cached;
+      if (req.mode === "navigate") {
+        const scopeUrl = new URL("./", self.registration.scope);
+        return (await cache.match(scopeUrl.toString())) || Response.error();
+      }
+      return Response.error();
+    }
+  })());
 });

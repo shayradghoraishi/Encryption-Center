@@ -56,7 +56,7 @@ export default function Donate() {
               <code className="min-w-0 flex-1 truncate rounded-md bg-muted/40 px-2.5 py-2 font-mono text-xs">{coin.address}</code>
               <button
                 onClick={() => copy(coin)}
-                className={cn("shrink-0 rounded-md border border-border p-2 transition hover:bg-muted", copied === coin.ticker && "border-emerald-500/50 text-emerald-400")}
+                className={cn("shrink-0 rounded-md border border-border p-2 transition hover:bg-muted", copied === coin.ticker && "border-red-500/50 text-red-400")}
                 aria-label={`Copy ${coin.ticker} address`}
               >
                 {copied === coin.ticker ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -72,7 +72,7 @@ export default function Donate() {
           href="https://github.com/shayradghoraishi"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-emerald-400 underline-offset-2 hover:underline"
+          className="text-red-400 underline-offset-2 hover:underline"
         >
           github.com/shayradghoraishi
         </a>

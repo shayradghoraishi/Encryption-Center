@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { HashRouter as Router, Route, Routes } from "react-router-dom";
 import PageNotFound from "./lib/PageNotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import { ThemeProvider } from "@/lib/theme";
@@ -21,6 +21,11 @@ import HashCalculator from "@/pages/HashCalculator";
 import Help from "@/pages/Help";
 import Donate from "@/pages/Donate";
 import KeyVault from "@/pages/KeyVault";
+import Signatures from "@/pages/Signatures";
+import Inspector from "@/pages/Inspector";
+import SecurityCheck from "@/pages/SecurityCheck";
+import Privacy from "@/pages/Privacy";
+import SecurityCalculator from "@/pages/SecurityCalculator";
 
 function App() {
   return (
@@ -41,6 +46,11 @@ function App() {
                   <Route path="/hashes" element={<HashCalculator />} />
                   <Route path="/keys" element={<KeyManagement />} />
                   <Route path="/vault" element={<KeyVault />} />
+                  <Route path="/signatures" element={<Signatures />} />
+                  <Route path="/inspector" element={<Inspector />} />
+                  <Route path="/security" element={<SecurityCheck />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/calculator" element={<SecurityCalculator />} />
                   <Route path="/help" element={<Help />} />
                   <Route path="/donate" element={<Donate />} />
                   <Route path="/settings" element={<Settings />} />

@@ -1,177 +1,156 @@
-import React, { createContext, useContext, useCallback } from "react";
+import React, { createContext, useContext, useCallback, useEffect, useMemo, useState } from "react";
 
-const dict = {
-    brand: "Encryption Center",
-    brandTag: "Client-side crypto suite",
-    nav: {
-      text: "Text / Code",
-      encoding: "Encoding",
-      classical: "Classical Ciphers",
-      files: "File Encryption",
-      steganography: "Steganography",
-      passwords: "Password Generator",
-      hashes: "Hash Calculator",
-      keys: "Key Management",
-      settings: "Settings",
-      help: "Help Center",
-      donate: "Donate",
-      vault: "Key Vault",
-    },
-    theme: {
-      light: "Light mode",
-      dark: "Dark mode",
-    },
-    mode: {
-      simple: "Simple",
-      advanced: "Advanced",
-    },
-    common: {
-      encrypt: "Encrypt",
-      decrypt: "Decrypt",
-      copy: "Copy",
-      download: "Download",
-      clear: "Clear",
-      generate: "Generate",
-      password: "Password",
-      input: "Input",
-      output: "Output",
-      loading: "Processing…",
-      success: "Success",
-      error: "Error",
-      required: "Required",
-      optional: "Optional",
-      save: "Save",
-      cancel: "Cancel",
-      search: "Search",
-      export: "Export",
-      import: "Import",
-      delete: "Delete",
-      close: "Close",
-      advanced: "Advanced",
-      simple: "Simple",
-      secure: "Secure",
-      educational: "Educational",
-      encoding: "Encoding",
-      nothing: "Nothing to process",
-      enterText: "Enter some text first.",
-      passwordRequired: "Password required",
-      operationFailed: "Operation failed",
-      encrypted: "Encrypted successfully",
-      decrypted: "Decrypted successfully",
-      copied: "Copied to clipboard",
-      theme: "Theme",
-      language: "Language",
-      history: "History",
-      clearHistory: "Clear history",
-      noHistory: "No history yet.",
-      defaultMethod: "Default method",
-      securityReminder: "Client-side encryption is only as secure as the device running it. Use strong, unique passwords and keep your software updated.",
-      decryptedText: "Decrypted text",
-      showQr: "Show QR",
-      hideQr: "Hide QR",
-      qrTooLarge: "Output too large for a QR code.",
-      generatePair: "Generate pair",
-      addLayer: "Add layer",
-      layer: "Layer",
-      scanQr: "Scan QR into input",
-      recipientPub: "Recipient public key (to encrypt)",
-      yourSecret: "Your secret key (to decrypt)",
-      layersLabel: "Layers (encrypt top→bottom)",
-      layersHint: "Decryption applies layers in reverse order with the same passwords.",
-      codeLang: "Source language",
-      codeLangHint: "Optional — labels your code; does not change encryption.",
-      hide: "Hide",
-      show: "Show",
-      passwordPh: "Enter password…",
-    },
-    text: {
-      title: "Text / Code Encryption",
-      subtitle: "Encrypt and decrypt text using modern, audited algorithms.",
-      note: "All processing happens in your browser. Nothing is sent to any server. For real protection prefer AES-256-GCM or ChaCha20-Poly1305.",
-      plaintext: "Plaintext",
-      ciphertext: "Ciphertext",
-      runEncrypt: "Encrypt",
-      runDecrypt: "Decrypt",
-    },
-    files: {
-      title: "File Encryption",
-      subtitle: "Encrypt and decrypt any file entirely in your browser.",
-    },
-    encoding: {
-      title: "Encoding & Obfuscation",
-      subtitle: "Encode and decode text. These are not encryption.",
-    },
-    classical: {
-      title: "Classical Ciphers",
-      subtitle: "Historical ciphers for learning only. Not secure.",
-    },
-    stego: {
-      title: "Steganography",
-      subtitle: "Hide data inside images. Always encrypt first.",
-    },
-    keys: {
-      title: "Key Management",
-      subtitle: "Generate and manage cryptographic keys.",
-    },
-    settings: {
-      title: "Settings",
-      subtitle: "Theme, language, history and preferences.",
-      appearance: "Appearance",
-      preferences: "Preferences",
-      historyTitle: "Operation History",
-      backup: "Session Backup",
-    },
-    passwords: {
-      title: "Password Generator",
-      subtitle: "Generate strong random passwords and passphrases.",
-    },
-    hashes: {
-      title: "Hash Calculator",
-      subtitle: "Compute SHA digests and HMAC for integrity verification.",
-    },
-    help: {
-      title: "Help & Learning Center",
-      subtitle: "Understand every method, when to use it, and how to stay safe.",
-    },
-    donate: {
-      title: "Support this Project",
-      subtitle: "If this tool helps you, consider donating. Addresses below.",
-    },
-    vault: {
-      title: "Key Vault",
-      subtitle: "Store private keys encrypted with a master password. Stays in your browser.",
-    },
-    pg: {
-      title: "Password Generator",
-      subtitle: "Generate strong random passwords and passphrases.",
-    },
-    hc: {
-      title: "Hash Calculator",
-      subtitle: "Compute SHA digests and HMAC for integrity verification.",
-    },
-  };
+const STORAGE_KEY = "enc-language";
 
+const en = {
+  brand: "Encryption Center",
+  brandTag: "Client-side crypto suite",
+  nav: { text: "Text / Code", encoding: "Encoding", classical: "Classical Ciphers", files: "File Encryption", steganography: "Steganography", passwords: "Password Generator", hashes: "Hash Calculator", keys: "Key Management", settings: "Settings", help: "Help Center", donate: "Donate", vault: "Key Vault" },
+  theme: { light: "Light mode", dark: "Dark mode" },
+  mode: { simple: "Simple", advanced: "Advanced" },
+  language: { label: "Language", english: "English", persian: "فارسی" },
+  common: {
+    encrypt: "Encrypt", decrypt: "Decrypt", copy: "Copy", download: "Download", clear: "Clear", generate: "Generate", password: "Password", input: "Input", output: "Output", loading: "Processing…", success: "Success", error: "Error", required: "Required", optional: "Optional", save: "Save", cancel: "Cancel", search: "Search", export: "Export", import: "Import", delete: "Delete", close: "Close", advanced: "Advanced", simple: "Simple", secure: "Secure", educational: "Educational", encoding: "Encoding", nothing: "Nothing to process", enterText: "Enter some text first.", passwordRequired: "Password required", operationFailed: "Operation failed", encrypted: "Encrypted successfully", decrypted: "Decrypted successfully", copied: "Copied to clipboard", theme: "Theme", language: "Language", history: "History", clearHistory: "Clear history", noHistory: "No history yet.", defaultMethod: "Default method", securityReminder: "Client-side encryption is only as secure as the device running it. Use strong, unique passwords and keep your software updated.", decryptedText: "Decrypted text", showQr: "Show QR", hideQr: "Hide QR", qrTooLarge: "Output is too large for a QR code.", generatePair: "Generate pair", addLayer: "Add layer", layer: "Layer", scanQr: "Scan QR into input", recipientPub: "Recipient public key", yourSecret: "Your secret key", layersLabel: "Layers", layersHint: "Decryption applies layers in reverse order with the same passwords.", codeLang: "Source language", codeLangHint: "Optional — labels your code; it does not change encryption.", hide: "Hide", show: "Show", passwordPh: "Enter password…", selectLanguage: "Select language"
+  },
+  text: { title: "Text / Code Encryption", subtitle: "Encrypt and decrypt text using modern authenticated encryption.", note: "All cryptographic operations run locally in your browser. No plaintext, passwords, or ciphertext are uploaded by Encryption Center. For real protection prefer AES-256-GCM or ChaCha20-Poly1305.", plaintext: "Plaintext", ciphertext: "Ciphertext", runEncrypt: "Encrypt", runDecrypt: "Decrypt", ageStyle: "Age-style (X25519 + ChaCha20-Poly1305)", ageWarning: "This is a custom age-style format; it is not byte-compatible with the official age file format." },
+  files: { title: "File Encryption", subtitle: "Encrypt and decrypt files locally in a Web Worker.", encryptFiles: "Encrypt & download", decryptFile: "Decrypt & download", dropEncrypt: "Drop files here or click to browse", dropDecrypt: "Drop an encrypted .enc file or click to browse", workerNote: "Files are processed locally inside a Web Worker. The format authenticates every chunk and its position.", corrupted: "The encrypted file is corrupted, incomplete, or the password is incorrect." },
+  encoding: { title: "Encoding & Obfuscation", subtitle: "Encode and decode text. These formats are not encryption.", warning: "Encoding is not encryption. It provides no confidentiality. Use it for transport or learning, never to protect secrets." },
+  classical: { title: "Classical Ciphers", subtitle: "Historical ciphers for learning only. They are not secure.", warning: "These ciphers are broken and exist for education only. Never use them to protect real data." },
+  stego: { title: "Steganography", subtitle: "Hide data inside images or text carriers.", warning: "Steganography hides data but does not encrypt it. Encrypt the payload first. PNG is recommended for image LSB data; JPEG compression destroys hidden bits." },
+  keys: { title: "Key Management", subtitle: "Generate signing and encryption keys locally in your browser." },
+  settings: { title: "Settings", subtitle: "Theme, language, history and preferences.", appearance: "Appearance", preferences: "Preferences", historyTitle: "Operation History", backup: "Encrypted Session Backup", languageTitle: "Language", languageDescription: "Choose the interface language. Your choice is stored only in this browser." },
+  passwords: { title: "Password Generator", subtitle: "Generate strong random passwords and passphrases." },
+  hashes: { title: "Hash Calculator", subtitle: "Compute SHA digests and HMAC for integrity verification.", input: "Input", inputPh: "Type text to hash…", hmacKey: "HMAC key (optional)", hmacPh: "Leave empty for a plain hash", output: "Digest", copy: "Copy", note: "Hashes verify data integrity; they do not encrypt data. HMAC also requires a secret key." },
+  help: { title: "Help & Learning Center", subtitle: "Understand each method and its security properties." },
+  donate: { title: "Support this Project", subtitle: "If this project is useful to you, you can support its development." },
+  vault: { title: "Key Vault", subtitle: "Store private keys encrypted with a master password in this browser." },
+  pg: { title: "Password Generator", subtitle: "Generate strong random passwords and passphrases.", generate: "Generate", copy: "Copy", length: "Length", words: "Words", random: "Random password", passphrase: "Passphrase", lower: "Lowercase", upper: "Uppercase", digits: "Digits", symbols: "Symbols", noAmbiguous: "Avoid ambiguous characters" },
+  hc: { title: "Hash Calculator", subtitle: "Compute SHA digests and HMAC for integrity verification.", input: "Input", inputPh: "Type text to hash…", hmacKey: "HMAC key (optional)", hmacPh: "Leave empty for a plain hash", output: "Digest", copy: "Copy", note: "Hashes verify data integrity; they do not encrypt data. HMAC also requires a secret key." }
+};
+
+const fa = {
+  brand: "مرکز رمزنگاری", brandTag: "مجموعه ابزار رمزنگاری سمت کاربر",
+  nav: { text: "متن / کد", encoding: "کدگذاری", classical: "رمزهای کلاسیک", files: "رمزنگاری فایل", steganography: "نهان‌نگاری", passwords: "مولد رمز عبور", hashes: "محاسبه هش", keys: "مدیریت کلید", settings: "تنظیمات", help: "راهنما", donate: "حمایت", vault: "خزانه کلید" },
+  theme: { light: "حالت روشن", dark: "حالت تاریک" }, mode: { simple: "ساده", advanced: "پیشرفته" },
+  language: { label: "زبان", english: "English", persian: "فارسی" },
+  common: { encrypt: "رمزنگاری", decrypt: "رمزگشایی", copy: "کپی", download: "دانلود", clear: "پاک کردن", generate: "تولید", password: "رمز عبور", input: "ورودی", output: "خروجی", loading: "در حال پردازش…", success: "موفق", error: "خطا", required: "ضروری", optional: "اختیاری", save: "ذخیره", cancel: "لغو", search: "جستجو", export: "خروجی گرفتن", import: "وارد کردن", delete: "حذف", close: "بستن", advanced: "پیشرفته", simple: "ساده", secure: "امن", educational: "آموزشی", encoding: "کدگذاری", nothing: "چیزی برای پردازش وجود ندارد", enterText: "ابتدا مقداری متن وارد کنید.", passwordRequired: "رمز عبور لازم است", operationFailed: "عملیات ناموفق بود", encrypted: "رمزنگاری با موفقیت انجام شد", decrypted: "رمزگشایی با موفقیت انجام شد", copied: "در کلیپ‌بورد کپی شد", theme: "پوسته", language: "زبان", history: "تاریخچه", clearHistory: "پاک کردن تاریخچه", noHistory: "هنوز تاریخچه‌ای وجود ندارد.", defaultMethod: "روش پیش‌فرض", securityReminder: "امنیت رمزنگاری سمت کاربر به امنیت دستگاه شما وابسته است. از رمزهای عبور قوی و منحصربه‌فرد استفاده کنید و نرم‌افزار را به‌روز نگه دارید.", decryptedText: "متن رمزگشایی‌شده", showQr: "نمایش QR", hideQr: "پنهان کردن QR", qrTooLarge: "خروجی برای QR Code بیش از حد بزرگ است.", generatePair: "تولید جفت کلید", addLayer: "افزودن لایه", layer: "لایه", scanQr: "اسکن QR در ورودی", recipientPub: "کلید عمومی گیرنده", yourSecret: "کلید خصوصی شما", layersLabel: "لایه‌ها", layersHint: "رمزگشایی لایه‌ها را برعکس و با همان رمزها انجام می‌دهد.", codeLang: "زبان کد", codeLangHint: "اختیاری — فقط برچسب کد است و رمزنگاری را تغییر نمی‌دهد.", hide: "پنهان کردن", show: "نمایش", passwordPh: "رمز عبور را وارد کنید…", selectLanguage: "انتخاب زبان" },
+  text: { title: "رمزنگاری متن / کد", subtitle: "رمزنگاری و رمزگشایی متن با الگوریتم‌های احراز اصالت‌شده مدرن.", note: "تمام عملیات رمزنگاری در مرورگر شما انجام می‌شود. Encryption Center متن ساده، رمزها یا متن رمز‌شده را آپلود نمی‌کند. برای حفاظت واقعی از AES-256-GCM یا ChaCha20-Poly1305 استفاده کنید.", plaintext: "متن ساده", ciphertext: "متن رمز‌شده", runEncrypt: "رمزنگاری", runDecrypt: "رمزگشایی", ageStyle: "سبک age (X25519 + ChaCha20-Poly1305)", ageWarning: "این یک فرمت سفارشی شبیه age است و با فرمت رسمی age سازگار بایتی نیست." },
+  files: { title: "رمزنگاری فایل", subtitle: "رمزنگاری و رمزگشایی فایل‌ها به‌صورت محلی در Web Worker.", encryptFiles: "رمزنگاری و دانلود", decryptFile: "رمزگشایی و دانلود", dropEncrypt: "فایل‌ها را بکشید و رها کنید یا برای انتخاب کلیک کنید", dropDecrypt: "فایل .enc را بکشید یا برای انتخاب کلیک کنید", workerNote: "فایل‌ها در مرورگر و داخل Web Worker پردازش می‌شوند. فرمت فایل، هر قطعه و موقعیت آن را احراز اصالت می‌کند.", corrupted: "فایل رمز‌شده خراب یا ناقص است یا رمز عبور اشتباه است." },
+  encoding: { title: "کدگذاری و مبهم‌سازی", subtitle: "متن را کدگذاری و رمزگشایی کنید. این روش‌ها رمزنگاری نیستند.", warning: "کدگذاری رمزنگاری نیست و محرمانگی ایجاد نمی‌کند. از آن برای انتقال داده یا یادگیری استفاده کنید، نه حفاظت از اسرار." },
+  classical: { title: "رمزهای کلاسیک", subtitle: "رمزهای تاریخی صرفاً برای یادگیری هستند و امن نیستند.", warning: "این رمزها شکسته شده‌اند و فقط جنبه آموزشی دارند. هرگز برای حفاظت از داده واقعی استفاده نکنید." },
+  stego: { title: "نهان‌نگاری", subtitle: "داده را داخل تصویر یا متن حامل پنهان کنید.", warning: "نهان‌نگاری داده را مخفی می‌کند اما آن را رمزنگاری نمی‌کند. ابتدا payload را رمزنگاری کنید. برای LSB تصویری PNG مناسب است؛ فشرده‌سازی JPEG بیت‌های مخفی را خراب می‌کند." },
+  keys: { title: "مدیریت کلید", subtitle: "کلیدهای رمزنگاری و امضا را به‌صورت محلی در مرورگر تولید کنید." },
+  settings: { title: "تنظیمات", subtitle: "پوسته، زبان، تاریخچه و ترجیحات.", appearance: "ظاهر", preferences: "ترجیحات", historyTitle: "تاریخچه عملیات", backup: "پشتیبان رمزنگاری‌شده نشست", languageTitle: "زبان", languageDescription: "زبان رابط را انتخاب کنید. انتخاب شما فقط در همین مرورگر ذخیره می‌شود." },
+  passwords: { title: "مولد رمز عبور", subtitle: "رمزهای عبور و عبارت‌های عبور تصادفی و قوی تولید کنید." },
+  hashes: { title: "محاسبه هش", subtitle: "هش‌های SHA و HMAC را برای بررسی یکپارچگی محاسبه کنید.", input: "ورودی", inputPh: "متن را برای هش وارد کنید…", hmacKey: "کلید HMAC (اختیاری)", hmacPh: "برای هش ساده خالی بگذارید", output: "خلاصه هش", copy: "کپی", note: "هش برای بررسی یکپارچگی است و داده را رمزنگاری نمی‌کند. HMAC علاوه بر داده به کلید محرمانه نیاز دارد." },
+  help: { title: "مرکز راهنما و آموزش", subtitle: "روش‌ها و ویژگی‌های امنیتی آن‌ها را بهتر بشناسید." },
+  donate: { title: "حمایت از پروژه", subtitle: "اگر این پروژه برایتان مفید است، می‌توانید از توسعه آن حمایت کنید." },
+  vault: { title: "خزانه کلید", subtitle: "کلیدهای خصوصی را با رمز اصلی در همین مرورگر رمزنگاری و ذخیره کنید." },
+  pg: { title: "مولد رمز عبور", subtitle: "رمزهای عبور و عبارت‌های عبور قوی تولید کنید.", generate: "تولید", copy: "کپی", length: "طول", words: "کلمه", random: "رمز تصادفی", passphrase: "عبارت عبور", lower: "حروف کوچک", upper: "حروف بزرگ", digits: "اعداد", symbols: "نمادها", noAmbiguous: "حذف کاراکترهای مشابه" },
+  hc: { title: "محاسبه هش", subtitle: "هش‌های SHA و HMAC را برای بررسی یکپارچگی محاسبه کنید.", input: "ورودی", inputPh: "متن را برای هش وارد کنید…", hmacKey: "کلید HMAC (اختیاری)", hmacPh: "برای هش ساده خالی بگذارید", output: "خلاصه هش", copy: "کپی", note: "هش برای بررسی یکپارچگی است و داده را رمزنگاری نمی‌کند. HMAC علاوه بر داده به کلید محرمانه نیاز دارد." }
+};
+
+// Extended professional-tool vocabulary. Keeping these additions here lets the UI remain fully localizable without hardcoding labels into feature pages.
+Object.assign(en.common, { resultPh: "Result will appear here…", x25519PublicPh: "Base64 X25519 public key", x25519SecretPh: "Base64 X25519 secret key" });
+Object.assign(fa.common, { resultPh: "نتیجه اینجا نمایش داده می‌شود…", x25519PublicPh: "کلید عمومی X25519 (Base64)", x25519SecretPh: "کلید خصوصی X25519 (Base64)" });
+Object.assign(en.nav, { signatures: "Signatures", inspector: "File Inspector", security: "Security Check", privacy: "Privacy", calculator: "Security Calculator" });
+Object.assign(fa.nav, { signatures: "امضای دیجیتال", inspector: "بازرس فایل", security: "بررسی امنیت", privacy: "حریم خصوصی", calculator: "محاسبه‌گر امنیت" });
+Object.assign(en, {
+  signatures: { title: "Digital Signatures", subtitle: "Sign and verify text and files with Ed25519.", note: "Signatures provide integrity and authentication; they do not hide the content. Keep private signing keys secret.", textTitle: "Text signatures", fileTitle: "File signatures" },
+  inspector: { title: "File Inspector", subtitle: "Inspect Encryption Center ECV2 files without decrypting them.", note: "Inspection reads metadata and structure only. It never decrypts the payload and does not verify a password." },
+  security: { title: "Security Check", subtitle: "Review the browser environment used by Encryption Center.", note: "These checks describe the runtime environment. A passing check is not a guarantee that the device, browser or operating system is secure." },
+  privacy: { title: "Privacy Dashboard", subtitle: "Understand what Encryption Center stores and where operations happen.", note: "Encryption and decryption are designed to happen locally. Optional browser storage is used for preferences, history and the encrypted Key Vault." },
+  calculator: { title: "Security Calculator", subtitle: "Explore password entropy, KDF profiles and ECV2 overhead.", note: "Calculator results are estimates and educational guidance, not guarantees of attack resistance." },
+  common: { ...en.common }
+});
+Object.assign(fa, {
+  signatures: { title: "امضای دیجیتال", subtitle: "امضا و بررسی متن و فایل با Ed25519.", note: "امضای دیجیتال یکپارچگی و اصالت را بررسی می‌کند و محتوای فایل را مخفی نمی‌کند. کلید خصوصی امضا را محرمانه نگه دارید.", textTitle: "امضای متن", fileTitle: "امضای فایل" },
+  inspector: { title: "بازرس فایل", subtitle: "فایل‌های ECV2 را بدون رمزگشایی بررسی کنید.", note: "بازرسی فقط ساختار و فراداده را می‌خواند. payload را رمزگشایی نمی‌کند و رمز عبور را هم بررسی نمی‌کند." },
+  security: { title: "بررسی امنیت", subtitle: "محیط مرورگری مورد استفاده Encryption Center را بررسی کنید.", note: "این موارد فقط وضعیت محیط اجرا را نشان می‌دهند و تضمین نمی‌کنند که دستگاه، مرورگر یا سیستم‌عامل کاملاً امن است." },
+  privacy: { title: "داشبورد حریم خصوصی", subtitle: "ببینید Encryption Center چه چیزهایی را ذخیره می‌کند و عملیات کجا انجام می‌شود.", note: "رمزنگاری و رمزگشایی به‌صورت محلی انجام می‌شوند. ذخیره‌سازی مرورگر فقط برای تنظیمات، تاریخچه و خزانه کلید رمزنگاری‌شده استفاده می‌شود." },
+  calculator: { title: "محاسبه‌گر امنیت", subtitle: "آنتروپی رمز عبور، پروفایل‌های KDF و سربار ECV2 را بررسی کنید.", note: "نتایج این ابزار تخمینی و آموزشی هستند و تضمین مقاومت در برابر حمله نیستند." },
+  common: { ...fa.common }
+});
+
+
+// Feature-level UI vocabulary kept separate from the core dictionaries so every visible control
+// can use the same translation mechanism without duplicating the base language objects.
+Object.assign(en.files, {
+  folderMode: "Folder mode", chooseFolder: "Choose a folder", folderPacked: "The folder is packed locally before encryption.",
+  nothingUploaded: "Nothing is uploaded.", clearSelection: "Clear", folderFiles: "folder file(s)", selectedFiles: "selected file(s)",
+  encryptFolder: "Encrypt folder", decryptFolder: "Decrypt folder", folderInfo: "Folder mode uses Encryption Center's ECF1 container. It preserves relative paths and metadata, then protects the entire container with authenticated ECV2 encryption. It is not a ZIP file.",
+  encryptedFolder: "Encrypted folder container downloaded.", restoredFiles: "file(s) restored.",
+});
+Object.assign(fa.files, {
+  folderMode: "حالت پوشه", chooseFolder: "انتخاب پوشه", folderPacked: "پوشه پیش از رمزنگاری به‌صورت محلی بسته‌بندی می‌شود.",
+  nothingUploaded: "هیچ داده‌ای بارگذاری نمی‌شود.", clearSelection: "پاک کردن", folderFiles: "فایل در پوشه", selectedFiles: "فایل انتخاب‌شده",
+  encryptFolder: "رمزنگاری پوشه", decryptFolder: "رمزگشایی پوشه", folderInfo: "حالت پوشه از کانتینر ECF1 مخصوص Encryption Center استفاده می‌کند. مسیرهای نسبی و فراداده حفظ می‌شوند و کل کانتینر با رمزنگاری احرازاصالت‌شده ECV2 محافظت می‌شود. این فرمت ZIP نیست.",
+  encryptedFolder: "کانتینر پوشه رمزنگاری‌شده دانلود شد.", restoredFiles: "فایل بازیابی شد.",
+});
+Object.assign(en.stego, { capacity: "Capacity", binaryData: "(binary data — download to view)", imageMode: "Image (LSB)", textMode: "Text / Emoji", hideMode: "Hide data", extractMode: "Extract data", hideImage: "Hide data in image", extractImage: "Extract hidden data", chooseFile: "Choose file", extractedData: "Extracted data", download: "Download stego image",
+  selectPng: "Select a PNG image first", imageTooLarge: "Image file is too large", imageLimit: "Steganography input images are limited to 15 MB.",
+  payloadLimit: "Steganography payload files are limited to 15 MB.", nothingToHide: "Nothing to hide", hidden: "Data hidden in image", downloadPng: "Download the PNG to share.", extracted: "Data extracted", bytesFound: "bytes found.", failed: "Failed",
+  hideText: "Hide message in text", extractText: "Extract hidden message", noHidden: "No hidden message found", messageHidden: "Message hidden in text", copyCarrier: "Copy the carrier text to share.", messageExtracted: "Message extracted", carrierCopied: "Carrier text copied",
+  imageDrop: "Drop a PNG image or click to browse", message: "Message to hide", messagePh: "Secret message…", file: "…or hide a file", result: "Result image", download: "Download stego image", cover: "Cover text / emojis (visible)", coverPh: "Paste any text or emojis here, e.g. 🦊🌈✨", secret: "Secret message to hide", secretPh: "The hidden message…", carrier: "Carrier text (copy & share)", carrierInput: "Carrier text containing hidden message", carrierPh: "Paste the text that contains the hidden message…", hiddenMessage: "Hidden message", copy: "Copy", maxFile: "Maximum payload size: 15 MB."
+});
+Object.assign(fa.stego, { capacity: "ظرفیت", binaryData: "(داده باینری است — برای مشاهده دانلود کنید)", imageMode: "تصویر (LSB)", textMode: "متن / ایموجی", hideMode: "پنهان کردن داده", extractMode: "استخراج داده", hideImage: "پنهان کردن داده در تصویر", extractImage: "استخراج داده مخفی", chooseFile: "انتخاب فایل", extractedData: "داده استخراج‌شده", download: "دانلود تصویر نهان‌نگاری‌شده",
+  selectPng: "ابتدا یک تصویر PNG انتخاب کنید", imageTooLarge: "حجم فایل تصویر زیاد است", imageLimit: "حجم تصویر ورودی نهان‌نگاری حداکثر ۱۵ مگابایت است.",
+  payloadLimit: "حجم فایل داده برای نهان‌نگاری حداکثر ۱۵ مگابایت است.", nothingToHide: "داده‌ای برای پنهان کردن وجود ندارد", hidden: "داده در تصویر پنهان شد", downloadPng: "برای اشتراک‌گذاری، PNG را دانلود کنید.", extracted: "داده استخراج شد", bytesFound: "بایت پیدا شد.", failed: "خطا",
+  hideText: "پنهان کردن پیام در متن", extractText: "استخراج پیام مخفی", noHidden: "پیام مخفی پیدا نشد", messageHidden: "پیام در متن پنهان شد", copyCarrier: "متن حامل را برای اشتراک‌گذاری کپی کنید.", messageExtracted: "پیام استخراج شد", carrierCopied: "متن حامل کپی شد",
+  imageDrop: "تصویر PNG را بکشید و رها کنید یا برای انتخاب کلیک کنید", message: "پیام برای پنهان کردن", messagePh: "پیام محرمانه…", file: "…یا یک فایل را پنهان کنید", result: "تصویر نتیجه", download: "دانلود تصویر نهان‌نگاری‌شده", cover: "متن / ایموجی حامل (قابل مشاهده)", coverPh: "هر متن یا ایموجی را وارد کنید؛ مثلاً 🦊🌈✨", secret: "پیام محرمانه برای پنهان کردن", secretPh: "پیام مخفی…", carrier: "متن حامل (کپی و اشتراک‌گذاری)", carrierInput: "متن حاوی پیام مخفی", carrierPh: "متن حاوی پیام مخفی را وارد کنید…", hiddenMessage: "پیام مخفی", copy: "کپی", maxFile: "حداکثر حجم داده: ۱۵ مگابایت."
+});
+Object.assign(en.security, { checkNames: { secureContext: "Secure context", webCrypto: "Web Crypto", webWorkers: "Web Workers", localStorage: "Local storage", serviceWorker: "Service worker", network: "Network state", external: "External runtime resources" }, secureContextOk: "HTTPS or localhost is active.", secureContextBad: "Use HTTPS for production.", webCryptoOk: "SubtleCrypto and secure randomness are available.", webCryptoBad: "Required cryptographic APIs are unavailable.", workersOk: "File processing can run off the main thread.", workersBad: "Large file operations may be unavailable.", storageOk: "Local preferences and vault storage are available.", storageBad: "Browser storage is unavailable.", serviceWorkerOk: "Offline/PWA support is available.", serviceWorkerBad: "PWA support is unavailable in this browser.", networkOk: "Browser currently reports online.", networkBad: "Browser currently reports offline.", externalOk: "No external script/link resources detected.", externalBad: "{count} external resource(s) detected.", runAgain: "Run checks again", checking: "Checking…", ready: "Checks completed", passed: "passed", failedChecks: "need attention", summary: "Runtime check summary", networkRequests: "Network requests", networkDesc: "Crypto operations are local by design.", storage: "Storage", storageDesc: "Vault and preferences stay in browser storage.", implementation: "Implementation", implementationDesc: "Web Crypto + audited third-party primitives where required." });
+Object.assign(fa.security, { checkNames: { secureContext: "محیط امن", webCrypto: "Web Crypto", webWorkers: "Web Workerها", localStorage: "ذخیره‌سازی محلی", serviceWorker: "سرویس‌ورکر", network: "وضعیت شبکه", external: "منابع خارجی اجرا" }, secureContextOk: "HTTPS یا localhost فعال است.", secureContextBad: "برای نسخه تولیدی از HTTPS استفاده کنید.", webCryptoOk: "SubtleCrypto و تولید اعداد تصادفی امن در دسترس هستند.", webCryptoBad: "APIهای رمزنگاری موردنیاز در دسترس نیستند.", workersOk: "پردازش فایل می‌تواند در Web Worker انجام شود.", workersBad: "پردازش فایل‌های بزرگ ممکن است در این مرورگر در دسترس نباشد.", storageOk: "تنظیمات محلی و ذخیره‌سازی خزانه کلید در دسترس است.", storageBad: "ذخیره‌سازی مرورگر در دسترس نیست.", serviceWorkerOk: "پشتیبانی آفلاین و PWA در دسترس است.", serviceWorkerBad: "پشتیبانی PWA در این مرورگر در دسترس نیست.", networkOk: "مرورگر در حال حاضر آنلاین است.", networkBad: "مرورگر در حال حاضر آفلاین است.", externalOk: "هیچ منبع خارجی اسکریپت/پیوند شناسایی نشد.", externalBad: "{count} منبع خارجی شناسایی شد.", runAgain: "اجرای دوباره بررسی‌ها", checking: "در حال بررسی…", ready: "بررسی‌ها انجام شد", passed: "مورد موفق", failedChecks: "مورد نیازمند توجه", summary: "خلاصه بررسی محیط اجرا", networkRequests: "درخواست‌های شبکه", networkDesc: "عملیات رمزنگاری به‌صورت محلی انجام می‌شوند.", storage: "ذخیره‌سازی", storageDesc: "خزانه کلید و ترجیحات در ذخیره‌سازی مرورگر باقی می‌مانند.", implementation: "پیاده‌سازی", implementationDesc: "Web Crypto و در موارد لازم کتابخانه‌های شخص ثالث بررسی‌شده." });
+Object.assign(en.hc, { text: "Text", file: "File", selectFile: "Select a file", calculateFile: "Calculate file hash", compare: "Compare with a known digest", expected: "Paste expected hash…", verify: "Verify", matches: "Digest matches.", noMatch: "Digest does not match." });
+Object.assign(fa.hc, { text: "متن", file: "فایل", selectFile: "یک فایل انتخاب کنید", calculateFile: "محاسبه هش فایل", compare: "مقایسه با خلاصه هش شناخته‌شده", expected: "هش مورد انتظار را وارد کنید…", verify: "بررسی", matches: "خلاصه هش مطابقت دارد.", noMatch: "خلاصه هش مطابقت ندارد." });
+Object.assign(en.inspector, { inspect: "Inspect file", detected: "Detected", valid: "valid", invalid: "invalid", chunks: "Authenticated chunks", first50: "Only the first 50 chunks are displayed." });
+Object.assign(fa.inspector, { inspect: "بررسی فایل", detected: "تشخیص داده‌شده", valid: "معتبر", invalid: "نامعتبر", chunks: "قطعه‌های احرازاصالت‌شده", first50: "فقط ۵۰ قطعه نخست نمایش داده می‌شوند." });
+Object.assign(en.signatures, { generateKeys: "Generate Ed25519 keys", message: "Message", messagePh: "Message to sign…", secret: "Secret key", secretPh: "Base64 secret key", public: "Public key", publicPh: "Base64 public key", signature: "Signature", sign: "Sign", verify: "Verify", valid: "Signature is valid.", invalid: "Signature is invalid.", file: "File to sign", signFile: "Sign file", fileSignature: "File signature", downloadSig: "Download .sig", verifyFile: "Verify a file", sigPh: "Signature (base64)", pubPh: "Public key (base64)", why: "Why signatures?", whyText: "Encryption protects confidentiality. A digital signature provides integrity and authentication: a verifier can check that the signed data has not changed and that it was produced by the holder of the signing key." });
+Object.assign(fa.signatures, { generateKeys: "تولید کلیدهای Ed25519", message: "پیام", messagePh: "پیام برای امضا…", secret: "کلید خصوصی", secretPh: "کلید خصوصی Base64", public: "کلید عمومی", publicPh: "کلید عمومی Base64", signature: "امضا", sign: "امضا کردن", verify: "بررسی", valid: "امضا معتبر است.", invalid: "امضا نامعتبر است.", file: "فایل برای امضا", signFile: "امضای فایل", fileSignature: "امضای فایل", downloadSig: "دانلود .sig", verifyFile: "بررسی فایل", sigPh: "امضا (Base64)", pubPh: "کلید عمومی (Base64)", why: "چرا امضای دیجیتال؟", whyText: "رمزنگاری محرمانگی را حفظ می‌کند. امضای دیجیتال یکپارچگی و اصالت را فراهم می‌کند تا بتوان بررسی کرد داده تغییر نکرده و توسط دارنده کلید امضا تولید شده است." });
+Object.assign(en.keys, { fileSigned: "File signed", signatureLabel: "Signature", verifyButton: "Verify", verifyFileButton: "Verify file", signFailed: "Signing failed", verifyFailed: "Verification failed", generationFailed: "Generation failed", signed: "Signed", signature: "Signature", sign: "Sign", verify: "Verify", messageToSign: "Message to sign…", originalMessage: "Original message…", edSecret: "Ed25519 secret key (base64)", signatureBase64: "Signature (base64)", publicBase64: "Public key (base64)", signFile: "Sign file", verifyFile: "Verify file" });
+Object.assign(fa.keys, { fileSigned: "فایل امضا شد", signatureLabel: "امضا", verifyButton: "بررسی", verifyFileButton: "بررسی فایل", signFailed: "امضا ناموفق بود", verifyFailed: "بررسی امضا ناموفق بود", generationFailed: "تولید ناموفق بود", signed: "امضا شد", signature: "امضا", sign: "امضا کردن", verify: "بررسی", messageToSign: "پیام برای امضا…", originalMessage: "پیام اصلی…", edSecret: "کلید خصوصی Ed25519 (Base64)", signatureBase64: "امضا (Base64)", publicBase64: "کلید عمومی (Base64)", signFile: "امضای فایل", verifyFile: "بررسی فایل" });
+Object.assign(en.vault, { unlock: "Unlock vault", create: "Create vault", masterPassword: "Master password", masterMin: "Master password (min 8)", createDesc: "Set a strong master password. It encrypts all keys and cannot be recovered.", addKey: "Add key", changePassword: "Change password", lock: "Lock", destroy: "Destroy", name: "Name", namePh: "e.g. GitHub signing key", type: "Type", publicOptional: "Public key (optional)", private: "Private key", save: "Save to vault", newMaster: "New master password", change: "Change", empty: "No keys stored yet.", confirmDestroy: "Destroy the vault and all stored keys? This cannot be undone.", created: "Vault created", unlocked: "Vault unlocked", locked: "Vault locked", destroyed: "Vault destroyed", added: "Key added to vault", deleted: "Key deleted", changed: "Master password changed", tooShort: "Master password too short (min 8)", newTooShort: "New password too short (min 8)", required: "Name and private key required", failed: "Failed" });
+Object.assign(fa.vault, { unlock: "باز کردن خزانه", create: "ایجاد خزانه", masterPassword: "رمز اصلی", masterMin: "رمز اصلی (حداقل ۸ کاراکتر)", createDesc: "یک رمز اصلی قوی تعیین کنید. این رمز همه کلیدها را رمزنگاری می‌کند و قابل بازیابی نیست.", addKey: "افزودن کلید", changePassword: "تغییر رمز", lock: "قفل کردن", destroy: "حذف خزانه", name: "نام", namePh: "مثلاً کلید امضای GitHub", type: "نوع", publicOptional: "کلید عمومی (اختیاری)", private: "کلید خصوصی", save: "ذخیره در خزانه", newMaster: "رمز اصلی جدید", change: "تغییر", empty: "هنوز کلیدی ذخیره نشده است.", confirmDestroy: "خزانه و همه کلیدهای ذخیره‌شده حذف شود؟ این کار قابل بازگشت نیست.", created: "خزانه ایجاد شد", unlocked: "خزانه باز شد", locked: "خزانه قفل شد", destroyed: "خزانه حذف شد", added: "کلید به خزانه افزوده شد", deleted: "کلید حذف شد", changed: "رمز اصلی تغییر کرد", tooShort: "رمز اصلی خیلی کوتاه است (حداقل ۸ کاراکتر)", newTooShort: "رمز جدید خیلی کوتاه است (حداقل ۸ کاراکتر)", required: "نام و کلید خصوصی لازم است", failed: "خطا" });
+Object.assign(en.help, { warning: "Client-side tools are only as safe as the device running them. Keep your OS and browser updated, avoid shared/public computers for sensitive data, and use strong, unique passwords.", tutorialsTitle: "Quick Tutorials", methodsTitle: "Methods & Security", badgeMeanings: "Badge meanings", secureMeaning: "safe for real use", educationalMeaning: "learning only, not for secrets", encodingMeaning: "reversible, not encryption", tutorials: [{ title: "Encrypt your first message", steps: ["Open Text / Code", "Pick AES-256-GCM", "Type your message and a strong password", "Click Encrypt — share the ciphertext + password via separate channels"] }, { title: "Share a secret with age", steps: ["Generate an age key pair", "Send your public key to the other person", "They encrypt with your public key", "You decrypt with your secret key"] }, { title: "Verify a file hasn't changed", steps: ["Open Hash Calculator", "Paste the content (or use HMAC with a shared key)", "Share the hash — recompute later to check integrity"] }], methods: ["General-purpose encryption of text and files. Industry standard, hardware-accelerated.", "Excellent on mobile and devices without AES hardware. Argon2id KDF.", "Public-key encryption — encrypt with someone's public key, only they can decrypt.", "Passphrase-based, interoperable with GnuPG/PGP tools.", "Multi-layer encryption (Advanced Mode). Decrypting requires all passwords in reverse order.", "Verify integrity and authenticity of data.", "Digitally sign messages/files so recipients can prove you authored them.", "Store private keys encrypted with a master password (Advanced Mode).", "Reversible encoding, NOT encryption. For transport/representation only.", "Historical ciphers for learning only. They are not secure.", "Hide data inside PNG pixels. Hides existence, not content.", "Hide a message inside text/emojis using invisible characters."], methodTips: ["Use a strong password (12+ chars). The app derives a key with PBKDF2.", "A useful choice when AES hardware is unavailable.", "Share your public key freely; never share your secret key.", "Use a memorable but strong passphrase.", "Use an independent strong password for each layer.", "Use HMAC with a secret key to detect tampering.", "Keep your secret key; share your public key for verification.", "Back up the vault — clearing browser storage can delete it.", "Anyone can decode it. Never use encoding for secrecy.", "Never use classical ciphers for real secrets.", "Always encrypt the payload first. JPEG destroys hidden data.", "Some platforms strip zero-width characters on copy/paste."] });
+Object.assign(fa.help, { warning: "ابزارهای سمت کاربر فقط به اندازه دستگاه اجراکننده امن هستند. سیستم‌عامل و مرورگر را به‌روز نگه دارید، برای داده‌های حساس از رایانه عمومی یا اشتراکی استفاده نکنید و از رمزهای قوی و منحصربه‌فرد استفاده کنید.", tutorialsTitle: "آموزش‌های سریع", methodsTitle: "روش‌ها و ویژگی‌های امنیتی", badgeMeanings: "معنی برچسب‌ها", secureMeaning: "مناسب استفاده واقعی", educationalMeaning: "فقط آموزشی و نامناسب برای اسرار", encodingMeaning: "قابل بازگشت و غیررمزنگاری", tutorials: [{ title: "اولین پیام خود را رمزنگاری کنید", steps: ["متن / کد را باز کنید", "AES-256-GCM را انتخاب کنید", "پیام و رمز عبور قوی را وارد کنید", "روی رمزنگاری بزنید و متن رمز‌شده و رمز عبور را از کانال‌های جداگانه به اشتراک بگذارید"] }, { title: "اشتراک یک راز با age", steps: ["یک جفت کلید age تولید کنید", "کلید عمومی را برای طرف مقابل بفرستید", "طرف مقابل با کلید عمومی شما رمزنگاری می‌کند", "شما با کلید خصوصی رمزگشایی می‌کنید"] }, { title: "بررسی تغییر نکردن فایل", steps: ["محاسبه هش را باز کنید", "محتوا را وارد کنید یا از HMAC با کلید مشترک استفاده کنید", "هش را نگه دارید و بعداً دوباره محاسبه و مقایسه کنید"] }], methods: ["رمزنگاری عمومی برای متن و فایل‌ها با شتاب سخت‌افزاری.", "مناسب دستگاه‌های بدون شتاب AES؛ با KDF نوع Argon2id.", "رمزنگاری کلید عمومی؛ فقط دارنده کلید خصوصی می‌تواند رمزگشایی کند.", "رمزنگاری مبتنی بر عبارت عبور و سازگار با ابزارهای GnuPG/PGP.", "رمزنگاری چندلایه در حالت پیشرفته.", "برای بررسی یکپارچگی و اصالت داده.", "امضای دیجیتال پیام و فایل برای بررسی اصالت و تغییر نکردن.", "ذخیره کلیدهای خصوصی به‌صورت رمزنگاری‌شده با رمز اصلی.", "کدگذاری قابل بازگشت است و رمزنگاری نیست.", "رمزهای تاریخی برای آموزش هستند و امن نیستند.", "پنهان کردن داده در پیکسل‌های PNG؛ محتوا را رمزنگاری نمی‌کند.", "پنهان کردن پیام در متن و ایموجی با کاراکترهای نامرئی."], methodTips: ["از رمز عبور قوی استفاده کنید؛ برنامه کلید را با PBKDF2 مشتق می‌کند.", "در دستگاه‌های بدون شتاب AES می‌تواند مناسب باشد.", "کلید عمومی را می‌توان به اشتراک گذاشت؛ کلید خصوصی را هرگز به اشتراک نگذارید.", "از عبارت عبور قوی و قابل به‌خاطر سپاری استفاده کنید.", "برای هر لایه از رمز عبور قوی و مستقل استفاده کنید.", "برای تشخیص دستکاری از HMAC با کلید محرمانه استفاده کنید.", "کلید خصوصی را حفظ کنید و کلید عمومی را برای بررسی به اشتراک بگذارید.", "از خزانه پشتیبان بگیرید؛ پاک شدن ذخیره‌سازی مرورگر می‌تواند آن را حذف کند.", "هر کسی می‌تواند آن را رمزگشایی کند؛ برای محرمانگی استفاده نکنید.", "رمزهای کلاسیک را برای اسرار واقعی استفاده نکنید.", "ابتدا payload را رمزنگاری کنید؛ JPEG داده مخفی را خراب می‌کند.", "برخی پلتفرم‌ها کاراکترهای نامرئی را هنگام کپی/پیست حذف می‌کنند."] });
+Object.assign(en.settings, { historyCleared: "History cleared", defaultSaved: "Default method saved", workspaceCleared: "Local workspace cleared", workspaceDesc: "History and in-memory vault state were cleared. Browser-managed memory cannot be guaranteed to be physically wiped.", backupRequired: "Backup password required", vaultLocked: "Vault is locked", unlockVaultBackup: "Unlock the Key Vault before including it in a backup.", backupDownloaded: "Session backup downloaded", exportFailed: "Export failed", restored: "History & settings restored; unlock the vault and re-import to restore keys.", imported: "Session imported", importFailed: "Import failed", operationHistory: "Operation History", clear: "Clear", storedLocal: "Stored only in your browser (localStorage). Never sent anywhere.", noOperations: "No operations yet.", searchPh: "Search method / mode…", export: "Export", noMatching: "No matching entries." });
+Object.assign(fa.settings, { historyCleared: "تاریخچه پاک شد", defaultSaved: "روش پیش‌فرض ذخیره شد", workspaceCleared: "فضای کاری محلی پاک شد", workspaceDesc: "تاریخچه و وضعیت خزانه کلید در حافظه پاک شد. پاک‌شدن فیزیکی حافظه مرورگر تضمین نمی‌شود.", backupRequired: "رمز پشتیبان لازم است", vaultLocked: "خزانه قفل است", unlockVaultBackup: "برای افزودن خزانه به پشتیبان، ابتدا آن را باز کنید.", backupDownloaded: "پشتیبان نشست دانلود شد", exportFailed: "خروجی گرفتن ناموفق بود", restored: "تاریخچه و تنظیمات بازیابی شدند؛ برای بازیابی کلیدها خزانه را باز و دوباره وارد کنید.", imported: "نشست وارد شد", importFailed: "وارد کردن ناموفق بود", operationHistory: "تاریخچه عملیات", clear: "پاک کردن", storedLocal: "فقط در مرورگر شما ذخیره می‌شود و جایی ارسال نمی‌شود.", noOperations: "هنوز عملیاتی ثبت نشده است.", searchPh: "جستجوی روش / حالت…", export: "خروجی گرفتن", noMatching: "مورد منطبقی پیدا نشد." });
+Object.assign(en.settings, { appearanceDesc: "Choose your preferred theme. Dark is recommended for reduced eye strain.", dark: "Dark", light: "Light", defaultMethod: "Default Encryption Method", defaultMethodDesc: "Pre-selected when you open the Text Encryption section.", developer: "Developer Mode", developerDesc: "Show runtime and build information useful for debugging without exposing secrets.", enabled: "Enabled", disabled: "Disabled", cleanup: "Local Workspace Cleanup", cleanupDesc: "Clears operation history, locks the in-memory Key Vault and requests clipboard clearing. It cannot guarantee physical erasure from browser memory.", clearWorkspace: "Clear local workspace", backupTitle: "Session Backup (Encrypted)", backupDesc: "Download your history & settings (and optionally your Key Vault) as a password-encrypted file. Import it on any device to restore.", backupPassword: "Backup password", includeVault: "Include Key Vault (unlock it on the Key Vault page first)", exportSession: "Export session", importSession: "Import session", securityReminder: "Security reminder", securityReminderText: "Client-side encryption is only as secure as the device running it. Use strong, unique passwords and keep your software updated. For highly sensitive data, consider hardware security keys." });
+Object.assign(fa.settings, { appearanceDesc: "پوسته موردنظر خود را انتخاب کنید. حالت تاریک می‌تواند خستگی چشم را کاهش دهد.", dark: "تاریک", light: "روشن", defaultMethod: "روش پیش‌فرض رمزنگاری", defaultMethodDesc: "هنگام ورود به بخش رمزنگاری متن از این روش استفاده می‌شود.", developer: "حالت توسعه‌دهنده", developerDesc: "اطلاعات اجرا و ساخت را برای رفع اشکال نمایش می‌دهد، بدون افشای اسرار.", enabled: "فعال", disabled: "غیرفعال", cleanup: "پاک‌سازی فضای کاری محلی", cleanupDesc: "تاریخچه را پاک می‌کند، خزانه کلید در حافظه را قفل می‌کند و درخواست پاک‌سازی کلیپ‌بورد می‌دهد. پاک‌شدن فیزیکی حافظه مرورگر تضمین نمی‌شود.", clearWorkspace: "پاک‌سازی فضای کاری محلی", backupTitle: "پشتیبان نشست (رمزنگاری‌شده)", backupDesc: "تاریخچه و تنظیمات و در صورت انتخاب، خزانه کلید را در یک فایل رمزنگاری‌شده ذخیره کنید و در دستگاه دیگر بازیابی کنید.", backupPassword: "رمز پشتیبان", includeVault: "افزودن خزانه کلید (ابتدا آن را در صفحه خزانه باز کنید)", exportSession: "خروجی نشست", importSession: "وارد کردن نشست", securityReminder: "یادآوری امنیتی", securityReminderText: "امنیت رمزنگاری سمت کاربر به دستگاه اجراکننده وابسته است. از رمزهای قوی و منحصربه‌فرد استفاده کنید و نرم‌افزار را به‌روز نگه دارید. برای داده‌های بسیار حساس، استفاده از کلیدهای امنیتی سخت‌افزاری را در نظر بگیرید." });
+
+const dictionaries = { en, fa };
 const LanguageContext = createContext(null);
 
+function getPathValue(dict, key) {
+  return key.split(".").reduce((value, part) => value?.[part], dict);
+}
+
 export function LanguageProvider({ children }) {
-  const t = useCallback((key) => {
-    const parts = key.split(".");
-    let v = dict;
-    for (const p of parts) {
-      v = v?.[p];
-      if (v == null) return key;
-    }
-    return v == null ? key : v;
+  const [lang, setLangState] = useState(() => localStorage.getItem(STORAGE_KEY) || "en");
+  const dictionary = dictionaries[lang] || en;
+  const dir = lang === "fa" ? "rtl" : "ltr";
+
+  const setLang = useCallback((next) => {
+    const safe = dictionaries[next] ? next : "en";
+    setLangState(safe);
+    localStorage.setItem(STORAGE_KEY, safe);
   }, []);
-  return (
-    <LanguageContext.Provider value={{ lang: "en", setLang: () => {}, dir: "ltr", t }}>
-      {children}
-    </LanguageContext.Provider>
-  );
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = dir;
+    document.body.dir = dir;
+  }, [lang, dir]);
+
+  const t = useCallback((key, vars) => { let value = getPathValue(dictionary, key) ?? getPathValue(en, key) ?? key; if (vars) Object.entries(vars).forEach(([k, v]) => { value = value.replaceAll(`{${k}}`, String(v)); }); return value; }, [dictionary]);
+  const value = useMemo(() => ({ lang, setLang, dir, t }), [lang, setLang, dir, t]);
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
 export function useI18n() {
   const ctx = useContext(LanguageContext);
-  if (!ctx) return { lang: "en", setLang: () => {}, dir: "ltr", t: (k) => k };
+  if (!ctx) return { lang: "en", setLang: () => {}, dir: "ltr", t: (key) => key };
   return ctx;
 }
+
+export const supportedLanguages = Object.keys(dictionaries);

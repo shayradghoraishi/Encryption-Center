@@ -39,7 +39,7 @@ export default function PasswordGenerator() {
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${mode === m ? "bg-emerald-500/15 text-emerald-400" : "text-muted-foreground hover:text-foreground"}`}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${mode === m ? "bg-red-500/15 text-red-400" : "text-muted-foreground hover:text-foreground"}`}
           >
             {t(`pg.${m}`)}
           </button>
@@ -53,14 +53,14 @@ export default function PasswordGenerator() {
               <Label>{t("pg.length")}</Label>
               <span className="text-xs text-muted-foreground">{length}</span>
             </div>
-            <input type="range" min={4} max={64} value={length} onChange={(e) => setLength(+e.target.value)} className="w-full accent-emerald-500" />
+            <input type="range" min={4} max={64} value={length} onChange={(e) => setLength(+e.target.value)} className="w-full accent-red-500" />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {[["lower", "pg.lower"], ["upper", "pg.upper"], ["digits", "pg.digits"], ["symbols", "pg.symbols"], ["noAmbiguous", "pg.noAmbiguous"]].map(([k, lk]) => (
               <button
                 key={k}
                 onClick={() => toggle(k)}
-                className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${opts[k] ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-border text-muted-foreground"}`}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${opts[k] ? "border-red-500/50 bg-red-500/10 text-red-400" : "border-border text-muted-foreground"}`}
               >
                 {t(lk)}
               </button>
@@ -74,7 +74,7 @@ export default function PasswordGenerator() {
               <Label>{t("pg.words")}</Label>
               <span className="text-xs text-muted-foreground">{words}</span>
             </div>
-            <input type="range" min={3} max={12} value={words} onChange={(e) => setWords(+e.target.value)} className="w-full accent-emerald-500" />
+            <input type="range" min={3} max={12} value={words} onChange={(e) => setWords(+e.target.value)} className="w-full accent-red-500" />
           </div>
         </div>
       )}

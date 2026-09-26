@@ -12,6 +12,8 @@ import { embedData, extractData, getImageCapacity, textEmbed, textExtract } from
 import { downloadBytes, downloadText, addHistory } from "@/lib/crypto";
 import { cn } from "@/lib/utils";
 
+const MAX_STEGO_FILE_BYTES = 15 * 1024 * 1024;
+
 export default function Steganography() {
   const { t } = useI18n();
   const { toast } = useToast();
@@ -35,6 +37,10 @@ export default function Steganography() {
   const [revealed, setRevealed] = useState("");
 
   const pickImage = (f) => {
+    if (f.size > MAX_STEGO_FILE_BYTES && mode === "embed") {
+      toast({ title: t("stego.imageTooLarge"), description: t("stego.imageLimit"), variant: "destructive" });
+      return;
+    }
     setImage(f);
     setCapacity("");
     getImageCapacity(f).then(setCapacity).catch(() => {});
@@ -45,30 +51,35 @@ export default function Steganography() {
     setDragging(false);
     const f = e.dataTransfer.files[0];
     if (f && f.type.startsWith("image/")) pickImage(f);
-  }, []);
+  }, [mode]);
 
   const runImage = async () => {
-    if (!image) { toast({ title: "Select a PNG image first", variant: "destructive" }); return; }
+    if (!image) { toast({ title: t("stego.selectPng"), variant: "destructive" }); return; }
     setLoading(true);
     try {
       if (mode === "embed") {
         let payload;
-        if (payloadFile) payload = new Uint8Array(await payloadFile.arrayBuffer());
+        if (payloadFile) {
+          if (payloadFile.size > MAX_STEGO_FILE_BYTES) {
+            throw new Error(t("stego.payloadLimit"));
+          }
+          payload = new Uint8Array(await payloadFile.arrayBuffer());
+        }
         else if (message) payload = message;
-        else { toast({ title: "Nothing to hide", variant: "destructive" }); setLoading(false); return; }
+        else { toast({ title: t("stego.nothingToHide"), variant: "destructive" }); setLoading(false); return; }
         const blob = await embedData(image, payload);
         const url = URL.createObjectURL(blob);
         setResultUrl(url);
         addHistory({ section: "Steganography", method: "LSB", mode: "embed", bytes: blob.size });
-        toast({ title: "Data hidden in image", description: "Download the PNG to share." });
+        toast({ title: t("stego.hidden"), description: t("stego.downloadPng") });
       } else {
         const bytes = await extractData(image);
         setExtracted(bytes);
         addHistory({ section: "Steganography", method: "LSB", mode: "extract", bytes: bytes.length });
-        toast({ title: "Data extracted", description: `${bytes.length} bytes found.` });
+        toast({ title: t("stego.extracted"), description: `${bytes.length} bytes found.` });
       }
     } catch (e) {
-      toast({ title: "Failed", description: e.message, variant: "destructive" });
+      toast({ title: t("stego.failed"), description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -77,20 +88,20 @@ export default function Steganography() {
   const runText = () => {
     try {
       if (mode === "embed") {
-        if (!secret) { toast({ title: "Nothing to hide", variant: "destructive" }); return; }
+        if (!secret) { toast({ title: t("stego.nothingToHide"), variant: "destructive" }); return; }
         const out = textEmbed(cover || "​", secret); // zero-width space fallback if cover empty
         setCarrier(out);
         addHistory({ section: "Steganography", method: "Zero-width", mode: "embed", bytes: secret.length });
-        toast({ title: "Message hidden in text", description: "Copy the carrier text to share." });
+        toast({ title: t("stego.messageHidden"), description: t("stego.copyCarrier") });
       } else {
         const msg = textExtract(carrier);
-        if (msg == null) { toast({ title: "No hidden message found", variant: "destructive" }); return; }
+        if (msg == null) { toast({ title: t("stego.noHidden"), variant: "destructive" }); return; }
         setRevealed(msg);
         addHistory({ section: "Steganography", method: "Zero-width", mode: "extract", bytes: msg.length });
-        toast({ title: "Message extracted" });
+        toast({ title: t("stego.messageExtracted") });
       }
     } catch (e) {
-      toast({ title: "Failed", description: e.message, variant: "destructive" });
+      toast({ title: t("stego.failed"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -102,7 +113,7 @@ export default function Steganography() {
   };
 
   const copyCarrier = () => {
-    navigator.clipboard.writeText(carrier).then(() => toast({ title: "Carrier text copied" }));
+    navigator.clipboard.writeText(carrier).then(() => toast({ title: t("stego.carrierCopied") }));
   };
 
   return (
@@ -123,7 +134,7 @@ export default function Steganography() {
             onClick={() => { setSurface(s); setResultUrl(""); setExtracted(null); setCarrier(""); setRevealed(""); }}
             className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${surface === s ? "bg-amber-500/15 text-amber-400" : "text-muted-foreground hover:text-foreground"}`}
           >
-            {s === "image" ? "Image (LSB)" : "Text / Emoji"}
+            {s === "image" ? t("stego.imageMode") : t("stego.textMode")}
           </button>
         ))}
       </div>
@@ -136,7 +147,7 @@ export default function Steganography() {
             onClick={() => { setMode(md); setResultUrl(""); setExtracted(null); setRevealed(""); }}
             className={`rounded-md px-4 py-1.5 text-sm font-medium capitalize transition ${mode === md ? "bg-amber-500/15 text-amber-400" : "text-muted-foreground hover:text-foreground"}`}
           >
-            {md === "embed" ? "Hide data" : "Extract data"}
+            {md === "embed" ? t("stego.hideMode") : t("stego.extractMode")}
           </button>
         ))}
       </div>
@@ -150,20 +161,20 @@ export default function Steganography() {
             onClick={() => imgInputRef.current?.click()}
             className={cn(
               "mt-5 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 text-center transition",
-              dragging ? "border-emerald-500 bg-emerald-500/5" : "border-border hover:border-muted-foreground/50"
+              dragging ? "border-red-500 bg-red-500/5" : "border-border hover:border-muted-foreground/50"
             )}
           >
             <input ref={imgInputRef} type="file" accept="image/png,image/bmp" className="hidden" onChange={(e) => e.target.files[0] && pickImage(e.target.files[0])} />
             {image ? (
               <div className="flex flex-col items-center gap-2">
-                <ImageIcon className="h-8 w-8 text-emerald-400" />
+                <ImageIcon className="h-8 w-8 text-red-400" />
                 <span className="text-sm font-medium">{image.name}</span>
-                {capacity && <span className="text-xs text-muted-foreground">Capacity: ~{capacity}</span>}
+                {capacity && <span className="text-xs text-muted-foreground">{t("stego.capacity")}: ~{capacity}</span>}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <Upload className="h-8 w-8 text-muted-foreground" />
-                <span className="text-sm font-medium">Drop a PNG image or click to browse</span>
+                <span className="text-sm font-medium">{t("stego.imageDrop")}</span>
               </div>
             )}
           </div>
@@ -171,15 +182,15 @@ export default function Steganography() {
           {mode === "embed" && (
             <div className="mt-5 space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Message to hide</Label>
-                <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder="Secret message…" />
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("stego.message")}</Label>
+                <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder={t("stego.messagePh")} />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">…or hide a file</Label>
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("stego.file")}</Label>
                 <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => setPayloadFile(e.target.files[0])} />
                 <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1.5">
                   <Upload className="h-3.5 w-3.5" />
-                  {payloadFile ? payloadFile.name : "Choose file"}
+                  {payloadFile ? payloadFile.name : t("stego.chooseFile")}
                 </Button>
               </div>
             </div>
@@ -187,15 +198,15 @@ export default function Steganography() {
 
           <Button onClick={runImage} disabled={loading} className="mt-5 w-full gap-2">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
-            {mode === "embed" ? "Hide data in image" : "Extract hidden data"}
+            {mode === "embed" ? t("stego.hideImage") : t("stego.extractImage")}
           </Button>
 
           {resultUrl && (
             <div className="mt-5 space-y-3 rounded-xl border border-border p-4">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Result image</span>
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("stego.result")}</span>
               <img src={resultUrl} alt="stego" className="max-h-64 rounded-lg border border-border" />
-              <a href={resultUrl} download="stego.png" className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/15 px-3 py-1.5 text-sm font-medium text-emerald-400 hover:bg-emerald-500/25">
-                <Download className="h-4 w-4" /> Download stego image
+              <a href={resultUrl} download="stego.png" className="inline-flex items-center gap-1.5 rounded-md bg-red-500/15 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/25">
+                <Download className="h-4 w-4" /> {t("stego.download")}
               </a>
             </div>
           )}
@@ -203,13 +214,13 @@ export default function Steganography() {
           {extracted && (
             <div className="mt-5 space-y-3 rounded-xl border border-border p-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Extracted data ({extracted.length} bytes)</span>
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("stego.extractedData")} ({extracted.length} bytes)</span>
                 <Button variant="outline" size="sm" onClick={downloadExtracted} className="gap-1.5">
-                  <Download className="h-3.5 w-3.5" /> Download
+                  <Download className="h-3.5 w-3.5" /> {t("common.download")}
                 </Button>
               </div>
               <pre className="max-h-48 overflow-auto rounded-lg bg-muted/40 p-3 font-mono text-xs">
-                {(() => { try { return new TextDecoder("utf-8", { fatal: true }).decode(extracted); } catch { return "(binary data — download to view)"; } })()}
+                {(() => { try { return new TextDecoder("utf-8", { fatal: true }).decode(extracted); } catch { return t("stego.binaryData"); } })()}
               </pre>
             </div>
           )}
@@ -219,39 +230,39 @@ export default function Steganography() {
           {mode === "embed" ? (
             <div className="mt-5 space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Cover text / emojis (visible)</Label>
-                <Textarea value={cover} onChange={(e) => setCover(e.target.value)} rows={3} placeholder="Paste any text or emojis here, e.g. 🦊🌈✨" />
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("stego.cover")}</Label>
+                <Textarea value={cover} onChange={(e) => setCover(e.target.value)} rows={3} placeholder={t("stego.coverPh")} />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Secret message to hide</Label>
-                <Textarea value={secret} onChange={(e) => setSecret(e.target.value)} rows={3} placeholder="The hidden message…" />
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("stego.secret")}</Label>
+                <Textarea value={secret} onChange={(e) => setSecret(e.target.value)} rows={3} placeholder={t("stego.secretPh")} />
               </div>
               <Button onClick={runText} className="w-full gap-2">
-                <Type className="h-4 w-4" /> Hide message in text
+                <Type className="h-4 w-4" /> {t("stego.hideText")}
               </Button>
               {carrier && (
                 <div className="space-y-2 rounded-xl border border-border p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Carrier text (copy & share)</span>
-                    <Button variant="outline" size="sm" onClick={copyCarrier} className="gap-1.5">Copy</Button>
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("stego.carrier")}</span>
+                    <Button variant="outline" size="sm" onClick={copyCarrier} className="gap-1.5">{t("stego.copy")}</Button>
                   </div>
-                  <pre className="max-h-32 overflow-auto break-words rounded-lg bg-muted/40 p-3 font-mono text-xs">{carrier}</pre>
+                  <pre className="max-h-48 min-w-0 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-muted/40 p-3 font-mono text-xs leading-5">{carrier}</pre>
                 </div>
               )}
             </div>
           ) : (
             <div className="mt-5 space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Carrier text containing hidden message</Label>
-                <Textarea value={carrier} onChange={(e) => setCarrier(e.target.value)} rows={4} placeholder="Paste the text that contains the hidden message…" />
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("stego.carrierInput")}</Label>
+                <Textarea value={carrier} onChange={(e) => setCarrier(e.target.value)} rows={4} placeholder={t("stego.carrierPh")} />
               </div>
               <Button onClick={runText} className="w-full gap-2">
-                <Eye className="h-4 w-4" /> Extract hidden message
+                <Eye className="h-4 w-4" /> {t("stego.extractText")}
               </Button>
               {revealed && (
                 <div className="space-y-2 rounded-xl border border-border p-4">
-                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Hidden message</span>
-                  <pre className="break-words rounded-lg bg-muted/40 p-3 font-mono text-sm">{revealed}</pre>
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("stego.hiddenMessage")}</span>
+                  <pre className="max-h-96 min-w-0 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted/40 p-3 font-mono text-sm leading-6">{revealed}</pre>
                 </div>
               )}
             </div>

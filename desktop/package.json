@@ -1,0 +1,33 @@
+{
+  "name": "encryption-center-desktop",
+  "private": true,
+  "version": "2.0.1",
+  "description": "Optional Electron wrapper for Encryption Center",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^38.2.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.shayrad.encryptioncenter",
+    "productName": "Encryption Center",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "../dist/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "Encryption-Center-${version}-${arch}.${ext}"
+    }
+  }
+}

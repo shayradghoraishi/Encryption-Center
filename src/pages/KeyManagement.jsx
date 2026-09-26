@@ -48,8 +48,8 @@ export default function KeyManagement() {
       if (!signFile || !signFileSec) throw new Error("File and secret key required");
       const data = new Uint8Array(await signFile.arrayBuffer());
       setFileSig(ed25519SignBytes(data, signFileSec.trim()));
-      toast({ title: "File signed" });
-    } catch (e) { toast({ title: "Signing failed", description: e.message, variant: "destructive" }); }
+      toast({ title: t("keys.fileSigned") });
+    } catch (e) { toast({ title: t("keys.signFailed"), description: e.message, variant: "destructive" }); }
   };
   const verifyFileNow = async () => {
     try {
@@ -58,7 +58,7 @@ export default function KeyManagement() {
       const ok = ed25519VerifyBytes(data, verifyFileSig.trim(), verifyFilePub.trim());
       setVerifyFileResult(ok);
       toast({ title: ok ? "File signature valid ✓" : "File signature invalid ✗", variant: ok ? "default" : "destructive" });
-    } catch (e) { toast({ title: "Verification failed", description: e.message, variant: "destructive" }); }
+    } catch (e) { toast({ title: t("keys.verifyFailed"), description: e.message, variant: "destructive" }); }
   };
 
   const generate = async () => {
@@ -73,7 +73,7 @@ export default function KeyManagement() {
       setKeys(result);
       toast({ title: `${keyType.toUpperCase()} key pair generated` });
     } catch (e) {
-      toast({ title: "Generation failed", description: e.message, variant: "destructive" });
+      toast({ title: t("keys.generationFailed"), description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -83,9 +83,9 @@ export default function KeyManagement() {
     try {
       if (!signMsg || !signSec) throw new Error("Message and secret key required");
       setSignature(ed25519Sign(signMsg, signSec.trim()));
-      toast({ title: "Signed" });
+      toast({ title: t("keys.signed") });
     } catch (e) {
-      toast({ title: "Signing failed", description: e.message, variant: "destructive" });
+      toast({ title: t("keys.signFailed"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -95,7 +95,7 @@ export default function KeyManagement() {
       setVerifyResult(ok);
       toast({ title: ok ? "Signature valid ✓" : "Signature invalid ✗", variant: ok ? "default" : "destructive" });
     } catch (e) {
-      toast({ title: "Verification failed", description: e.message, variant: "destructive" });
+      toast({ title: t("keys.verifyFailed"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -122,14 +122,14 @@ export default function KeyManagement() {
       {/* Key generation */}
       <div className="mt-6 rounded-xl border border-border p-5">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-          <Sparkles className="h-4 w-4 text-emerald-400" /> Generate Key Pair
+          <Sparkles className="h-4 w-4 text-red-400" /> Generate Key Pair
         </h3>
         <div className="flex flex-wrap gap-2">
           {["ed25519", "ecdsa", "rsa", "openpgp"].map((t) => (
             <button
               key={t}
               onClick={() => setKeyType(t)}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-medium uppercase transition ${keyType === t ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-border text-muted-foreground hover:text-foreground"}`}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium uppercase transition ${keyType === t ? "border-red-500/50 bg-red-500/10 text-red-400" : "border-border text-muted-foreground hover:text-foreground"}`}
             >
               {t}
             </button>
@@ -139,14 +139,14 @@ export default function KeyManagement() {
         {keyType === "rsa" && (
           <div className="mt-3 flex gap-2">
             {[2048, 3072, 4096].map((b) => (
-              <button key={b} onClick={() => setRsaBits(b)} className={`rounded-md border px-3 py-1 text-xs ${rsaBits === b ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-border"}`}>{b} bits</button>
+              <button key={b} onClick={() => setRsaBits(b)} className={`rounded-md border px-3 py-1 text-xs ${rsaBits === b ? "border-red-500/50 bg-red-500/10 text-red-400" : "border-border"}`}>{b} bits</button>
             ))}
           </div>
         )}
         {keyType === "ecdsa" && (
           <div className="mt-3 flex gap-2">
             {["P-256", "P-384", "P-521"].map((c) => (
-              <button key={c} onClick={() => setCurve(c)} className={`rounded-md border px-3 py-1 text-xs ${curve === c ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-border"}`}>{c}</button>
+              <button key={c} onClick={() => setCurve(c)} className={`rounded-md border px-3 py-1 text-xs ${curve === c ? "border-red-500/50 bg-red-500/10 text-red-400" : "border-border"}`}>{c}</button>
             ))}
           </div>
         )}
@@ -176,16 +176,16 @@ export default function KeyManagement() {
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <div className="rounded-xl border border-border p-5">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-            <Signature className="h-4 w-4 text-emerald-400" /> Sign (Ed25519)
+            <Signature className="h-4 w-4 text-red-400" /> Sign (Ed25519)
           </h3>
           <div className="space-y-3">
-            <Textarea value={signMsg} onChange={(e) => setSignMsg(e.target.value)} placeholder="Message to sign…" rows={3} />
-            <Textarea value={signSec} onChange={(e) => setSignSec(e.target.value)} placeholder="Ed25519 secret key (base64)" rows={2} className="font-mono text-xs" />
-            <Button onClick={sign} size="sm" className="gap-1.5"><Signature className="h-3.5 w-3.5" /> Sign</Button>
+            <Textarea value={signMsg} onChange={(e) => setSignMsg(e.target.value)} placeholder={t("keys.messageToSign")} rows={3} />
+            <Textarea value={signSec} onChange={(e) => setSignSec(e.target.value)} placeholder={t("keys.edSecret")} rows={2} className="font-mono text-xs" />
+            <Button onClick={sign} size="sm" className="gap-1.5"><Signature className="h-3.5 w-3.5" /> {t("keys.sign")}</Button>
             {signature && (
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <Label className="text-[11px] uppercase text-muted-foreground">Signature</Label>
+                  <Label className="text-[11px] uppercase text-muted-foreground">{t("keys.signatureLabel")}</Label>
                   <CopyButton value={signature} />
                 </div>
                 <Textarea value={signature} readOnly rows={3} className="font-mono text-[11px]" />
@@ -196,15 +196,15 @@ export default function KeyManagement() {
 
         <div className="rounded-xl border border-border p-5">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-            <ShieldCheck className="h-4 w-4 text-emerald-400" /> Verify (Ed25519)
+            <ShieldCheck className="h-4 w-4 text-red-400" /> Verify (Ed25519)
           </h3>
           <div className="space-y-3">
-            <Textarea value={verifyMsg} onChange={(e) => setVerifyMsg(e.target.value)} placeholder="Original message…" rows={2} />
-            <Textarea value={verifySig} onChange={(e) => setVerifySig(e.target.value)} placeholder="Signature (base64)" rows={2} className="font-mono text-xs" />
-            <Textarea value={verifyPub} onChange={(e) => setVerifyPub(e.target.value)} placeholder="Public key (base64)" rows={2} className="font-mono text-xs" />
-            <Button onClick={verify} size="sm" variant="outline" className="gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Verify</Button>
+            <Textarea value={verifyMsg} onChange={(e) => setVerifyMsg(e.target.value)} placeholder={t("keys.originalMessage")} rows={2} />
+            <Textarea value={verifySig} onChange={(e) => setVerifySig(e.target.value)} placeholder={t("keys.signatureBase64")} rows={2} className="font-mono text-xs" />
+            <Textarea value={verifyPub} onChange={(e) => setVerifyPub(e.target.value)} placeholder={t("keys.publicBase64")} rows={2} className="font-mono text-xs" />
+            <Button onClick={verify} size="sm" variant="outline" className="gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> {t("keys.verifyButton")}</Button>
             {verifyResult !== null && (
-              <div className={`rounded-lg border px-3 py-2 text-sm font-medium ${verifyResult ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-rose-500/40 bg-rose-500/10 text-rose-400"}`}>
+              <div className={`rounded-lg border px-3 py-2 text-sm font-medium ${verifyResult ? "border-green-500/40 bg-green-500/10 text-green-400" : "border-rose-500/40 bg-rose-500/10 text-rose-400"}`}>
                 {verifyResult ? "Signature is valid ✓" : "Signature is invalid ✗"}
               </div>
             )}
@@ -216,16 +216,16 @@ export default function KeyManagement() {
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <div className="rounded-xl border border-border p-5">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-            <FileKey className="h-4 w-4 text-emerald-400" /> Sign a File (Ed25519)
+            <FileKey className="h-4 w-4 text-red-400" /> Sign a File (Ed25519)
           </h3>
           <div className="space-y-3">
             <input type="file" onChange={(e) => setSignFile(e.target.files[0])} className="block w-full text-xs file:mr-2 file:rounded file:border file:border-border file:px-2 file:py-1" />
-            <Textarea value={signFileSec} onChange={(e) => setSignFileSec(e.target.value)} placeholder="Ed25519 secret key (base64)" rows={2} className="font-mono text-xs" />
-            <Button onClick={signFileNow} size="sm" className="gap-1.5"><Signature className="h-3.5 w-3.5" /> Sign file</Button>
+            <Textarea value={signFileSec} onChange={(e) => setSignFileSec(e.target.value)} placeholder={t("keys.edSecret")} rows={2} className="font-mono text-xs" />
+            <Button onClick={signFileNow} size="sm" className="gap-1.5"><Signature className="h-3.5 w-3.5" /> {t("keys.signFile")}</Button>
             {fileSig && (
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <Label className="text-[11px] uppercase text-muted-foreground">Signature</Label>
+                  <Label className="text-[11px] uppercase text-muted-foreground">{t("keys.signatureLabel")}</Label>
                   <CopyButton value={fileSig} />
                 </div>
                 <Textarea value={fileSig} readOnly rows={3} className="font-mono text-[11px]" />
@@ -235,15 +235,15 @@ export default function KeyManagement() {
         </div>
         <div className="rounded-xl border border-border p-5">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-            <ShieldCheck className="h-4 w-4 text-emerald-400" /> Verify a File (Ed25519)
+            <ShieldCheck className="h-4 w-4 text-red-400" /> Verify a File (Ed25519)
           </h3>
           <div className="space-y-3">
             <input type="file" onChange={(e) => setVerifyFile(e.target.files[0])} className="block w-full text-xs file:mr-2 file:rounded file:border file:border-border file:px-2 file:py-1" />
-            <Textarea value={verifyFileSig} onChange={(e) => setVerifyFileSig(e.target.value)} placeholder="Signature (base64)" rows={2} className="font-mono text-xs" />
-            <Textarea value={verifyFilePub} onChange={(e) => setVerifyFilePub(e.target.value)} placeholder="Public key (base64)" rows={2} className="font-mono text-xs" />
-            <Button onClick={verifyFileNow} size="sm" variant="outline" className="gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Verify file</Button>
+            <Textarea value={verifyFileSig} onChange={(e) => setVerifyFileSig(e.target.value)} placeholder={t("keys.signatureBase64")} rows={2} className="font-mono text-xs" />
+            <Textarea value={verifyFilePub} onChange={(e) => setVerifyFilePub(e.target.value)} placeholder={t("keys.publicBase64")} rows={2} className="font-mono text-xs" />
+            <Button onClick={verifyFileNow} size="sm" variant="outline" className="gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> {t("keys.verifyFile")}</Button>
             {verifyFileResult !== null && (
-              <div className={`rounded-lg border px-3 py-2 text-sm font-medium ${verifyFileResult ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" : "border-rose-500/40 bg-rose-500/10 text-rose-400"}`}>
+              <div className={`rounded-lg border px-3 py-2 text-sm font-medium ${verifyFileResult ? "border-green-500/40 bg-green-500/10 text-green-400" : "border-rose-500/40 bg-rose-500/10 text-rose-400"}`}>
                 {verifyFileResult ? "File signature is valid ✓" : "File signature is invalid ✗"}
               </div>
             )}

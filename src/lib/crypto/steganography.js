@@ -3,19 +3,25 @@
 // Header: 4 bytes magic "STG1" || 4 bytes payload length (uint32 big-endian) || payload bytes
 
 const MAGIC = "STG1";
+const MAX_PAYLOAD_BYTES = 15 * 1024 * 1024;
+const HEADER_BYTES = 8;
 
 export async function embedData(imageFile, payload) {
   const img = await loadImage(imageFile);
   const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Canvas is not supported by this browser");
   ctx.drawImage(img, 0, 0);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
 
   const payloadBytes = payload instanceof Uint8Array ? payload : new TextEncoder().encode(payload);
-  const header = new Uint8Array(8);
+  if (payloadBytes.length > MAX_PAYLOAD_BYTES) {
+    throw new Error("Steganography payloads are limited to 15 MB.");
+  }
+  const header = new Uint8Array(HEADER_BYTES);
   for (let i = 0; i < 4; i++) header[i] = MAGIC.charCodeAt(i);
   const view = new DataView(header.buffer);
   view.setUint32(4, payloadBytes.length);
@@ -24,6 +30,7 @@ export async function embedData(imageFile, payload) {
   full.set(payloadBytes, header.length);
 
   const capacity = Math.floor((data.length / 4) * 3 / 8);
+  if (capacity < HEADER_BYTES) throw new Error("Image is too small to contain a valid payload header.");
   if (full.length > capacity) {
     throw new Error(`Payload too large. Max capacity: ${formatBytes(capacity)}, payload: ${formatBytes(full.length)}`);
   }
@@ -38,8 +45,11 @@ export async function embedData(imageFile, payload) {
   }
 
   ctx.putImageData(imageData, 0, 0);
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), "image/png");
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) reject(new Error("The browser could not create the stego PNG."));
+      else resolve(blob);
+    }, "image/png");
   });
 }
 
@@ -48,29 +58,43 @@ export async function extractData(imageFile) {
   const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Canvas is not supported by this browser");
   ctx.drawImage(img, 0, 0);
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-  const headerBits = 8 * 8;
-  const headerBytes = readBits(data, 0, headerBits);
-  let magic = "";
-  for (let i = 0; i < 4; i++) magic += String.fromCharCode(headerBytes[i]);
-  if (magic !== MAGIC) throw new Error("No hidden data found (invalid magic header).");
+  const headerBits = HEADER_BYTES * 8;
+  const channelCapacity = Math.floor((data.length / 4) * 3);
+  const capacity = Math.floor(channelCapacity / 8);
+  if (capacity < HEADER_BYTES) throw new Error("Image is too small to contain a valid payload header.");
+
+  // STG1 was historically written at RGB channel 0. Try that first, then the
+  // remaining bit offsets so images produced by older/browser-specific builds
+  // can still be recovered when their stream was shifted by a channel boundary.
+  let headerBytes = null;
+  let streamStart = -1;
+  for (let offset = 0; offset < 8 && offset + headerBits <= channelCapacity; offset++) {
+    const candidate = readBits(data, offset, headerBits);
+    let magic = "";
+    for (let i = 0; i < 4; i++) magic += String.fromCharCode(candidate[i]);
+    if (magic === MAGIC) { headerBytes = candidate; streamStart = offset; break; }
+  }
+  if (!headerBytes) throw new Error("No hidden data found (invalid magic header).");
 
   const view = new DataView(headerBytes.buffer);
   const payloadLen = view.getUint32(4);
-  if (payloadLen > data.length) throw new Error("Corrupted payload header.");
+  if (payloadLen > MAX_PAYLOAD_BYTES) throw new Error("Hidden payload exceeds the 15 MB limit.");
+  if (streamStart + headerBits + payloadLen * 8 > channelCapacity) throw new Error("Corrupted payload header: declared payload exceeds image capacity.");
 
-  const payloadBytes = readBits(data, headerBits, payloadLen * 8);
-  return payloadBytes;
+  return readBits(data, streamStart + headerBits, payloadLen * 8);
 }
 
 function readBits(data, startBit, bitCount) {
   const byteCount = bitCount / 8;
   const out = new Uint8Array(byteCount);
   for (let i = 0; i < bitCount; i++) {
-    const pixelIndex = startBit + i + Math.floor((startBit + i) / 3);
+    const channelIndex = startBit + i;
+    const pixelIndex = channelIndex + Math.floor(channelIndex / 3);
     const bit = data[pixelIndex] & 1;
     out[Math.floor(i / 8)] |= bit << (7 - (i % 8));
   }
@@ -96,7 +120,7 @@ function formatBytes(n) {
 export function getImageCapacity(imageFile) {
   return loadImage(imageFile).then((img) => {
     const pixels = img.width * img.height;
-    const bytes = Math.floor((pixels * 3) / 8) - 8; // minus header
+    const bytes = Math.floor((pixels * 3) / 8) - HEADER_BYTES; // minus header
     return formatBytes(Math.max(0, bytes));
   });
 }

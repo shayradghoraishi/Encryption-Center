@@ -22,7 +22,10 @@ export function bytesToBase64(bytes) {
   return btoa(bin);
 }
 export function base64ToBytes(b64) {
-  const bin = atob(b64);
+  if (typeof b64 !== "string" || !/^[A-Za-z0-9+/]*={0,2}$/.test(b64.trim()) || b64.trim().length % 4 !== 0) {
+    throw new Error("Invalid Base64 data");
+  }
+  const bin = atob(b64.trim());
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes;

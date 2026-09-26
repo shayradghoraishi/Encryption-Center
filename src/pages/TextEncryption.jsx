@@ -23,7 +23,7 @@ import QrScanner from "@/components/QrScanner";
 const METHODS = {
   aes: { name: "AES-256-GCM", badge: "secure", desc: "Authenticated encryption via Web Crypto. PBKDF2 key derivation (250k iterations). Industry standard.", auth: "password" },
   chacha: { name: "ChaCha20-Poly1305", badge: "secure", desc: "Modern AEAD stream cipher. Argon2id key derivation. Excellent on mobile / no hardware AES.", auth: "password" },
-  age: { name: "age (X25519 + ChaCha20)", badge: "secure", desc: "Public-key encryption: ephemeral X25519 + ChaCha20-Poly1305. Encrypt with recipient's public key.", auth: "key" },
+  age: { name: "Age-style (X25519 + ChaCha20)", badge: "secure", desc: "Public-key encryption using ephemeral X25519 and ChaCha20-Poly1305.", auth: "key" },
   openpgp: { name: "OpenPGP (symmetric)", badge: "secure", desc: "OpenPGP.js hybrid encryption to a passphrase. AES-256. Interoperable with GnuPG.", auth: "password", advanced: true },
   cascade: { name: "Cascade", badge: "secure", desc: "Multi-layer encryption (Advanced Mode). Each layer is AES-256-GCM or ChaCha20-Poly1305 with its own password.", auth: "layers", advanced: true },
 };
@@ -32,7 +32,7 @@ export default function TextEncryption() {
   const { toast } = useToast();
   const { t } = useI18n();
   const { advanced } = useAdvancedMode();
-  const [method, setMethod] = useState("aes");
+  const [method, setMethod] = useState(() => localStorage.getItem("enc-default-method") || "aes");
   const [mode, setMode] = useState("encrypt");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
@@ -60,6 +60,7 @@ export default function TextEncryption() {
 
   const m = METHODS[method];
   const visibleMethods = Object.entries(METHODS).filter(([, v]) => !v.advanced || advanced);
+  React.useEffect(() => { if (METHODS[method]?.advanced && !advanced) setMethod("aes"); }, [advanced, method]);
 
   const run = async () => {
     if (!input.trim()) { toast({ title: t("common.nothing"), description: t("common.enterText"), variant: "destructive" }); return; }
@@ -96,7 +97,7 @@ export default function TextEncryption() {
   const genAgeKey = () => {
     const kp = generateAgeKeyPair();
     setAgePub(kp.publicKeyB64); setAgeSec(kp.secretKeyB64);
-    toast({ title: "age key pair generated", description: "Share the public key, keep the secret key safe." });
+    toast({ title: t("common.generatePair"), description: t("text.ageWarning") });
   };
 
   const addLayer = () => setLayers((l) => [...l, { kind: "aes", password: "" }]);
@@ -115,7 +116,7 @@ export default function TextEncryption() {
 
       <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {visibleMethods.map(([key, val]) => (
-          <button key={key} onClick={() => { setMethod(key); setOutput(""); }} className={`rounded-lg border p-3 text-left transition ${method === key ? "border-emerald-500/50 bg-emerald-500/5" : "border-border hover:border-muted-foreground/40"}`}>
+          <button key={key} onClick={() => { setMethod(key); setOutput(""); }} className={`rounded-lg border p-3 text-left transition ${method === key ? "border-red-500/50 bg-red-500/5" : "border-border hover:border-muted-foreground/40"}`}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold">{val.name}</span>
               {val.advanced && <Layers className="h-3 w-3 text-amber-400" />}
@@ -129,7 +130,7 @@ export default function TextEncryption() {
 
       <div className="mt-5 inline-flex rounded-lg border border-border p-0.5">
         {["encrypt", "decrypt"].map((md) => (
-          <button key={md} onClick={() => { setMode(md); setOutput(""); }} className={`rounded-md px-4 py-1.5 text-sm font-medium capitalize transition ${mode === md ? "bg-emerald-500/15 text-emerald-400" : "text-muted-foreground hover:text-foreground"}`}>{md === "encrypt" ? t("common.encrypt") : t("common.decrypt")}</button>
+          <button key={md} onClick={() => { setMode(md); setOutput(""); }} className={`rounded-md px-4 py-1.5 text-sm font-medium capitalize transition ${mode === md ? "bg-red-500/15 text-red-400" : "text-muted-foreground hover:text-foreground"}`}>{md === "encrypt" ? t("common.encrypt") : t("common.decrypt")}</button>
         ))}
       </div>
 
@@ -152,7 +153,7 @@ export default function TextEncryption() {
           <IOField
             label={mode === "encrypt" ? t("text.plaintext") : t("text.ciphertext")}
             value={input} onChange={setInput}
-            placeholder={mode === "encrypt" ? "Type or paste text to encrypt…" : "Paste encrypted data here…"}
+            placeholder={mode === "encrypt" ? (t("text.plaintext") + "…") : (t("text.ciphertext") + "…")}
             rows={7}
             downloadName={mode === "encrypt" ? `plaintext.${codeLang === "text" ? "txt" : codeLang}` : "ciphertext.txt"}
           />
@@ -168,16 +169,16 @@ export default function TextEncryption() {
           {m.auth === "key" && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">age Keys</Label>
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("text.ageStyle")}</Label>
                 <Button size="sm" variant="outline" onClick={genAgeKey} className="gap-1.5"><Sparkles className="h-3.5 w-3.5" /> {t("common.generatePair")}</Button>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] text-muted-foreground">Recipient public key (to encrypt)</Label>
-                <Textarea value={agePub} onChange={(e) => setAgePub(e.target.value)} rows={2} className="font-mono text-xs" placeholder="Base64 X25519 public key" />
+                <Label className="text-[11px] text-muted-foreground">{t("common.recipientPub")}</Label>
+                <Textarea value={agePub} onChange={(e) => setAgePub(e.target.value)} rows={2} className="font-mono text-xs" placeholder={t("common.x25519PublicPh")} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] text-muted-foreground">Your secret key (to decrypt)</Label>
-                <Textarea value={ageSec} onChange={(e) => setAgeSec(e.target.value)} rows={2} className="font-mono text-xs" placeholder="Base64 X25519 secret key" />
+                <Label className="text-[11px] text-muted-foreground">{t("common.yourSecret")}</Label>
+                <Textarea value={ageSec} onChange={(e) => setAgeSec(e.target.value)} rows={2} className="font-mono text-xs" placeholder={t("common.x25519SecretPh")} />
               </div>
             </div>
           )}
@@ -185,7 +186,7 @@ export default function TextEncryption() {
           {m.auth === "layers" && (
             <div className="space-y-3 rounded-xl border border-border p-4">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Layers (encrypt top→bottom)</Label>
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("common.layersLabel")}</Label>
                 <Button size="sm" variant="outline" onClick={addLayer} className="gap-1.5"><Plus className="h-3.5 w-3.5" /> {t("common.addLayer")}</Button>
               </div>
               {layers.map((l, i) => (
@@ -195,13 +196,13 @@ export default function TextEncryption() {
                       <option value="aes">AES-256-GCM</option>
                       <option value="chacha">ChaCha20-Poly1305</option>
                     </select>
-                    <span className="text-xs text-muted-foreground">Layer {i + 1}</span>
+                    <span className="text-xs text-muted-foreground">{t("common.layer")} {i + 1}</span>
                     {layers.length > 1 && <button onClick={() => removeLayer(i)} className="ml-auto text-muted-foreground hover:text-rose-400"><X className="h-3.5 w-3.5" /></button>}
                   </div>
-                  <PasswordInput value={l.password} onChange={(v) => setLayer(i, { password: v })} placeholder={`Password for layer ${i + 1}`} />
+                  <PasswordInput value={l.password} onChange={(v) => setLayer(i, { password: v })} placeholder={`${t("common.password")} ${t("common.layer")} ${i + 1}`} />
                 </div>
               ))}
-              <p className="text-xs text-muted-foreground">Decryption applies layers in reverse order with the same passwords.</p>
+              <p className="text-xs text-muted-foreground">{t("common.layersHint")}</p>
             </div>
           )}
 
@@ -215,7 +216,7 @@ export default function TextEncryption() {
           <IOField
             label={mode === "encrypt" ? t("text.ciphertext") : t("common.decryptedText")}
             value={output} readOnly
-            placeholder="Result will appear here…"
+            placeholder={t("common.resultPh")}
             rows={12}
             downloadName={mode === "encrypt" ? "ciphertext.txt" : `decrypted.${codeLang === "text" ? "txt" : codeLang}`}
           />

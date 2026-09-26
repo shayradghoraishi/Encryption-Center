@@ -23,9 +23,10 @@ export function generateAgeKeyPair() {
 
 export async function ageEncrypt(plaintext, recipientPublicKeyB64) {
   const recipientPub = naclutil_decode(recipientPublicKeyB64);
+  if (recipientPub.length !== 32) throw new Error("Recipient public key must be 32 bytes");
   const eph = nacl.box.keyPair();
   const shared = nacl.box.before(recipientPub, eph.secretKey);
-  const key = hkdf(sha256, shared, undefined, "age-encryption", 32);
+  const key = hkdf(sha256, shared, undefined, new TextEncoder().encode("Encryption Center age-style v1"), 32);
   const nonce = crypto.getRandomValues(new Uint8Array(12));
   const cipher = chacha20poly1305(key, nonce);
   const ct = cipher.encrypt(enc.encode(plaintext));
@@ -38,11 +39,12 @@ export async function ageEncrypt(plaintext, recipientPublicKeyB64) {
 
 export async function ageDecrypt(bytes, secretKeyB64) {
   const secretKey = naclutil_decode(secretKeyB64);
+  if (secretKey.length !== 32) throw new Error("Secret key must be 32 bytes");
   const ephPub = bytes.slice(0, 32);
   const nonce = bytes.slice(32, 44);
   const ct = bytes.slice(44);
   const shared = nacl.box.before(ephPub, secretKey);
-  const key = hkdf(sha256, shared, undefined, "age-encryption", 32);
+  const key = hkdf(sha256, shared, undefined, new TextEncoder().encode("Encryption Center age-style v1"), 32);
   const cipher = chacha20poly1305(key, nonce);
   return dec.decode(cipher.decrypt(ct));
 }

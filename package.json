@@ -1,7 +1,7 @@
 {
   "name": "encryption-center",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,14 @@
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cf:preview": "vite build && wrangler dev",
+    "cf:deploy": "vite build && wrangler deploy",
+    "desktop:install": "npm --prefix desktop install",
+    "desktop:start": "npm --prefix desktop run start",
+    "desktop:build": "npm --prefix desktop run dist",
+    "check": "npm run lint && npm run build",
+    "cli": "node cli/encryption-center.mjs"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^17.0.0",
@@ -102,6 +109,11 @@
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "wrangler": "^4.20.0"
+  },
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
   }
 }

@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { Outlet, NavLink } from "react-router-dom";
 import {
   Lock, Binary, ScrollText, FileKey, Image, KeyRound, Settings,
-  ShieldCheck, Menu, X, Sun, Moon, Key, Hash, BookOpen, Heart, Shield, Github,
+  ShieldCheck, Menu, X, Sun, Moon, Key, Hash, BookOpen, Heart, Shield, Github, FileSignature, ScanSearch, EyeOff, Calculator,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
 import { useAdvancedMode } from "@/lib/advanced-mode";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import LanguageSelect from "@/components/LanguageSelect";
 
 export const NAV_ITEMS = [
   { to: "/", key: "text", icon: Lock, end: true },
@@ -20,6 +21,11 @@ export const NAV_ITEMS = [
   { to: "/classical", key: "classical", icon: ScrollText, advanced: true },
   { to: "/keys", key: "keys", icon: KeyRound, advanced: true },
   { to: "/vault", key: "vault", icon: Shield, advanced: true },
+  { to: "/signatures", key: "signatures", icon: FileSignature, advanced: true },
+  { to: "/inspector", key: "inspector", icon: ScanSearch, advanced: true },
+  { to: "/security", key: "security", icon: ShieldCheck },
+  { to: "/privacy", key: "privacy", icon: EyeOff },
+  { to: "/calculator", key: "calculator", icon: Calculator, advanced: true },
   { to: "/help", key: "help", icon: BookOpen },
   { to: "/donate", key: "donate", icon: Heart },
   { to: "/settings", key: "settings", icon: Settings },
@@ -33,8 +39,8 @@ function SidebarContent({ onNavigate }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/20">
-          <ShieldCheck className="h-5 w-5" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-red-500/30 bg-black/80 shadow-lg shadow-red-500/20 ring-1 ring-red-500/10">
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" aria-hidden="true" className="h-full w-full object-contain p-1" />
         </div>
         <div>
           <h1 className="text-sm font-semibold tracking-tight">{t("brand")}</h1>
@@ -54,7 +60,7 @@ function SidebarContent({ onNavigate }) {
               className={({ isActive }) =>
                 cn(
                   "group flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
-                  isActive ? "bg-emerald-500/10 text-emerald-400 shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  isActive ? "bg-red-500/10 text-red-400 shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )
               }
             >
@@ -81,10 +87,13 @@ function SidebarContent({ onNavigate }) {
           </span>
         </button>
 
-        <Button variant="ghost" size="sm" onClick={toggle} className="w-full justify-start gap-2 text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <LanguageSelect compact />
+          <Button variant="ghost" size="sm" onClick={toggle} className="flex-1 justify-start gap-2 text-muted-foreground">
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           {theme === "dark" ? t("theme.light") : t("theme.dark")}
-        </Button>
+          </Button>
+        </div>
 
         <a
           href="https://github.com/shayradghoraishi"
@@ -123,14 +132,17 @@ export default function Layout() {
       )}
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3 lg:hidden">
+        <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 lg:hidden">
           <button onClick={() => setMobileOpen(true)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted">
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-emerald-400" />
+            <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg border border-red-500/30 bg-black/80 shadow-sm shadow-red-500/20">
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+            </div>
             <span className="text-sm font-semibold">{t("brand")}</span>
           </div>
+          <LanguageSelect compact />
         </header>
 
         <main className="flex-1 overflow-y-auto">

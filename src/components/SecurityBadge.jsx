@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const STYLES = {
   secure: {
-    className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    className: "bg-green-500/10 text-green-400 border-green-500/30",
     icon: ShieldCheck,
     label: "Secure",
   },
